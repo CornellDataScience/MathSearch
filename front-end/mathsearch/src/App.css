@@ -2,9 +2,40 @@
   text-align: center;
 }
 
+.navbar-brand {
+  padding-left: 10px;
+}
+
+form {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+}
+
+.text-field {
+  border-radius: 5px;
+  border-width: thin;
+  border-color: black;
+}
+
+.pdf-select {
+  margin-top: 20px;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
+}
+
+.input-section {
+  margin-top: 15%;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 60px;
+  padding-bottom: 10px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -14,7 +45,6 @@
 }
 
 .App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -32,6 +62,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
