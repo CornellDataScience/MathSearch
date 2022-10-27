@@ -20,6 +20,9 @@ class DataHandler():
     def format_output(self, output):
         pass
 
+    def download_file_from_s3(self, s3_bucket, s3_object):
+        self.clients[client_indices['s3']].download_file(s3_bucket, s3_object, f'mathsearch_{s3_object}')
+
     def run(self):
         # Get new input
         message = self.dequeue()
