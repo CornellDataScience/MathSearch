@@ -5,8 +5,6 @@ import UploadPDFToS3WithNativeSdk from './UploadPDFToS3WithNativeSdk.js';
 
 function App() {
 
-  console.log(process.env.REACT_APP_API_KEY)
-
   return (
     <div className="App">
       <NavBar />
