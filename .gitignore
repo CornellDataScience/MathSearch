@@ -1,4 +1,4 @@
 data/
 .DS_Store
 *.gz
-im2latex/
+*.png
