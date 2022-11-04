@@ -5,3 +5,6 @@ client_indices = {
 
 # SQS ---
 queue_url = ''
+
+# Duration before deletion
+duration = 86400 * 7
