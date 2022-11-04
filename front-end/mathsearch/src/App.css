@@ -1,70 +1,45 @@
-.App {
-  text-align: center;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* font-family: 'PT Sans', sans-serif; */
+  font-family: 'Montserrat', sans-serif;
 }
 
-.navbar-brand {
-  padding-left: 10px;
-}
-
-form {
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  width: 420px;
-  padding-bottom: 10px;
-}
-
-.text-field {
-  border-radius: 5px;
-  border-width: thin;
-  border-color: black;
-}
-
-.pdf-select {
-  margin-top: 20px;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-.input-section {
-  margin-top: 15%;
-}
-
-.title {
-  font-weight: bold;
-  font-size: 60px;
-  padding-bottom: 10px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
+/*****************************/
+/* .App {                    */
+/*   text-align: center;     */
+/* }                         */
+/*                           */
+/* .navbar-brand {           */
+/*   padding-left: 10px;     */
+/* }                         */
+/*                           */
+/* form {                    */
+/*   margin: auto;           */
+/*   display: flex;          */
+/*   flex-direction: column; */
+/*   width: 420px;           */
+/*   padding-bottom: 10px;   */
+/* }                         */
+/*                           */
+/* .text-field {             */
+/*   border-radius: 5px;     */
+/*   border-width: thin;     */
+/*   border-color: black;    */
+/* }                         */
+/*                           */
+/* .pdf-select {             */
+/*   margin-top: 20px;       */
+/* }                         */
+/*                           */
+/* .input-section {          */
+/*   margin-top: 15%;        */
+/* }                         */
+/*                           */
+/* .title {                  */
+/*   font-weight: bold;      */
+/*   font-size: 60px;        */
+/*   padding-bottom: 10px;   */
+/* }                         */
+/*****************************/
