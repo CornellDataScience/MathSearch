@@ -37,19 +37,6 @@ class DataHandler():
     def upload_file_to_s3(self, s3_bucket, s3_object, directory="/tmp"):
         self.clients[client_indices['s3']].upload_file(f'{directory}/mathsearch_{s3_object}', s3_bucket, f'{s3_object}_UPLOADED')
         
-    def delete_expired_files(self, s3_bucket, s3_object, directory="/tmp"):
-        kwargs = {"Bucket": s3_bucket, "Prefix": directory}
-        
-        response = self.clients[client_indices['s3']].list_objects_v2(**kwargs)
-        for obj in response["Contents"]:
-            if "." in obj["Key"]:
-                key_date = datetime.now()
-                last_modified = obj["LastModified"]
-                if key_date - last_modified >= DURATION:
-                    self.clients[client_indices['s3']].delete_object(Bucket=s3_bucket, Key=obj["Key"])
-            
-        return True
-
     def run(self):
         # Get new input
         message = self.dequeue()
