@@ -7,4 +7,4 @@ client_indices = {
 queue_url = ''
 
 # Duration before deletion
-duration = 86400 * 7
+DURATION = 86400 * 7

@@ -1,7 +1,7 @@
 from constants import *
+from datetime import datetime
 import os
 import boto3
-import time
 
 class DataHandler():
     def __init__(self):
@@ -40,51 +40,14 @@ class DataHandler():
     def delete_expired_files(self, s3_bucket, s3_object, directory="/tmp"):
         kwargs = {"Bucket": s3_bucket, "Prefix": directory}
         
-        while True:
-            response = self.clients[client_indices['s3']].list_objects_v2(**kwargs)
-            for obj in response["Contents"]:
-                if "." in obj["Key"]:
-                    key_date = time.time()
-                    
+        response = self.clients[client_indices['s3']].list_objects_v2(**kwargs)
+        for obj in response["Contents"]:
+            if "." in obj["Key"]:
+                key_date = datetime.now()
+                last_modified = obj["LastModified"]
+                if key_date - last_modified >= DURATION:
+                    self.clients[client_indices['s3']].delete_object(Bucket=s3_bucket, Key=obj["Key"])
             
-        return 0
-        
-    def get_key_info(self, s3_bucket, directory="/tmp"):
-        key_names = []
-        file_timestamps = []
-        file_sizes = []
-        kwargs = {"Bucket": s3_bucket, "Prefix": directory}
-        
-        while True:
-            response = self.clients[client_indices['s3']].list_objects_v2(**kwargs)
-            for obj in response["Contents"]:
-                # excludes deleting directories, which should not be in the bucket    
-                if "." in obj["Key"]:
-                    key_names.append(obj["Key"])
-                    file_timestamps.append(obj["LastModified"].timestamp())
-                    file_sizes.append(obj["Size"])
-                
-            try:
-                kwargs["ContinuationToken"] = response["NextContinuationToken"]
-            except KeyError:
-                break
-            
-        key_info = {
-            "key_path": key_names,
-            "timestamp": file_timestamps,
-            "size": file_sizes
-        }
-        
-        return key_info
-    
-    def check_expiration(limit=_expire_limit):
-        key_date = time.time()
-        expiration_limit = key_date - constants.duration
-        
-        return key_date < limit
-        
-    def delete_s3_file(self, s3_bucket, s3_object):
-        self.clients[client_indices['s3']].delete_object(Bucket=s3_bucket, Key=s3_object)
         return True
 
     def run(self):
