@@ -11,16 +11,19 @@ from torchvision.utils import save_image
 from torchvision.io import read_image, write_jpeg
 
 import os
-
-
 import random
-
-
-image = Image.open(str(Path('1a0db875f9.png')))
-image = image.convert('RGB')
 
 to_tensor = T.ToTensor()
 to_pil = T.ToPILImage()
+
+blur = T.GaussianBlur((7, 13))
+
+
+def img_input(file_name):
+    image = Image.open(str(Path(file_name)))
+    image = image.convert('RGB')
+
+    return (file_name, image)
 
 # dims = image.shape
 
@@ -39,13 +42,14 @@ if not path.exists():
 
 def augment(imgs):
     for name, img in imgs:
+
         a = to_tensor(img)
         dims = a.shape
 
         new_dims = (int(dims[1] * proportionality),
                     int(dims[2] * proportionality))
 
-        temp_path = path / 'name'
+        temp_path = path / name
 
         if not temp_path.exists():
             os.mkdir(temp_path)
@@ -57,10 +61,19 @@ def augment(imgs):
 
         img.save(temp_path / 'original_file.jpeg')
 
+        # random crop
         for i in range(5):
             random_crop_func = T.RandomCrop(size=new_dims)
             test = random_crop_func(a)
-            to_pil(test).save(temp_path_folder / f'{i}.jpeg')
+            to_pil(test).save(temp_path_folder / f'{i}_randomcrop.jpeg')
+
+        blurs = [blur(img) for _ in range(5)]
+
+        for i, j in enumerate(blurs):
+            j.save(temp_path_folder / f'{i}_blur.jpeg')
+
+
+augment([img_input('1a0db875f9.png')])
 
 
 class Rotatations:
@@ -72,14 +85,6 @@ class Rotatations:
     def __call__(self, x):
         angle = random.choice(self.angles)
         return TF.rotate(x, angle)
-
-
-# rotation_transform = Rotatations(angles=[-30, -15, 0, 15, 30])
-
-# print(image.shape)
-
-
-augment([('testing_image', image)])
 
 
 # randomcrop = T.RandomCrop()
