@@ -5,10 +5,11 @@ import boto3
 
 class DataHandler():
     def __init__(self):
-        self.clients = [boto3.client('sqs'), boto3.client('s3')]
+        self.clients = [boto3.resource('sqs'), boto3.client('s3')]
     
-    def enqueue(self, message):
-        self.clients[client_indices['sqs']].send_message(QueueUrl = queue_url, MessageBody = message)
+    def enqueue(self, queue_name, message):
+        queue = self.clients[client_indices['sqs']].get_queue_by_name(QueueName = queue_name)
+        queue.send_message(MessageBody = message)
     
     def dequeue(self):
         return self.clients[client_indices['sqs']].receive_message(QueueUrl = queue_url)['Messages']
@@ -16,22 +17,16 @@ class DataHandler():
     def invoke_model(self):
         pass
 
-    def process_input(self, input):
-        pass
+    def process_event(self, event):
+        sqs_message = event['Records'][0]['body']
+        
+        return sqs_message
     
     def format_output(self, output):
         pass
 
     def download_file_from_s3(self, s3_bucket, s3_object, directory="/tmp"):
-        # s3 = boto3.resource('s3')
-        # object = s3.Object('mathsearch-intermediary', 'mathsearch_test_pdf.png')
-        # body = object.get()['Body'].read()
-        # print(body)
-        
-        self.clients[client_indices['s3']].download_file(s3_bucket, s3_object, f'{directory}/mathsearch_{s3_object}')
-        # with open("/tmp/tmpa.txt", "w") as f:
-            # f.write('this is some content')
-        
+        self.clients[client_indices['s3']].download_file(s3_bucket, s3_object, f'{directory}/mathsearch_{s3_object}')        
         print(os.listdir('/tmp'))
     
     def upload_file_to_s3(self, s3_bucket, s3_object, directory="/tmp"):

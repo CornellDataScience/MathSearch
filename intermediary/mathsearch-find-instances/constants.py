@@ -3,8 +3,8 @@ client_indices = {
     's3': 1
 }
 
-# SQS ---
-queue_url = ''
+# SQS
+output_queue_name = 'MathSearchQueue-Output'
 
 # Duration before deletion
 DURATION = 86400 * 7
