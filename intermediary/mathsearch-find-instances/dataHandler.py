@@ -25,8 +25,13 @@ class DataHandler():
         except Exception as e:
             print("Error: ", e)
     
-    def invoke_model(self):
-        pass
+    def invoke_model(self, image1, image2):
+        image1 = image.imread(image1)
+        image2 = image.imread(image2)
+
+        print(image1)
+        print(image2)
+
 
     def process_event(self, event):
         sqs_message = event['Records'][0]['body']
@@ -37,11 +42,21 @@ class DataHandler():
         pass
 
     def download_file_from_s3(self, s3_bucket, s3_object, directory="/tmp"):
-        self.clients[client_indices['s3']].download_file(s3_bucket, s3_object, f'{directory}/mathsearch_{s3_object}')        
+        file_name = s3_object.split('/')[-1]
+        self.clients[client_indices['s3']].download_file(s3_bucket, s3_object, f'{directory}/mathsearch_{file_name}')        
         print(os.listdir('/tmp'))
+
+        return file_name
     
     def upload_file_to_s3(self, s3_bucket, s3_object, directory="/tmp"):
-        self.clients[client_indices['s3']].upload_file(f'{directory}/mathsearch_{s3_object}', s3_bucket, f'{s3_object}_UPLOADED')
+        """Uploads to S3 and returns the path name to the newly created object"""
+        file_name = s3_object.split('/')[-1]
+        extension = s3_object.split('.')[-1]
+
+        return_path = f"{'.'.join(s3_object.split('.')[:-1])}_UPLOADED.{extension}"
+        self.clients[client_indices['s3']].upload_file(f'{directory}/mathsearch_{file_name}', s3_bucket, return_path)
+
+        return return_path
         
     def run(self):
         # Get new input
