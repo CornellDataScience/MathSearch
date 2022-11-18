@@ -4,7 +4,8 @@ client_indices = {
 }
 
 # SQS
-output_queue_name = 'MathSearchQueue-Output'
+QUEUE_URL = 'MathSearchQueue-Input'
+OUTPUT_QUEUE_URL = 'MathSearchQueue-Output'
 
 # Duration before deletion
 DURATION = 86400 * 7

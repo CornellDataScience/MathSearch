@@ -5,14 +5,25 @@ import boto3
 
 class DataHandler():
     def __init__(self):
-        self.clients = [boto3.resource('sqs'), boto3.client('s3')]
+        self.clients = [boto3.client('sqs'), boto3.client('s3')]
     
     def enqueue(self, queue_name, message):
-        queue = self.clients[client_indices['sqs']].get_queue_by_name(QueueName = queue_name)
-        queue.send_message(MessageBody = message)
+        queue_url = self.clients[client_indices['sqs']].get_queue_url(QueueName = queue_name)['QueueUrl']
+        self.clients[client_indices['sqs']].send_message(QueueUrl = queue_url, MessageBody = message)
     
     def dequeue(self):
-        return self.clients[client_indices['sqs']].receive_message(QueueUrl = queue_url)['Messages']
+        try:
+            # Receive the message and parse the body
+            received_message = self.clients[client_indices['sqs']].receive_message(QueueUrl = QUEUE_URL)
+            body = received_message['Messages'][0]['Body']
+            
+            # Delete the corresponding message from the queue
+            receipt_handler = received_message['Messages'][0]['ReceiptHandle']
+            response = self.clients[client_indices['sqs']].delete_message(QueueUrl = QUEUE_URL, ReceiptHandle = receipt_handler)
+            
+            return body
+        except Exception as e:
+            print("Error: ", e)
     
     def invoke_model(self):
         pass
