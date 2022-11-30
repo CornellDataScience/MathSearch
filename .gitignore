@@ -1,3 +1,7 @@
 data/
 .DS_Store
 *.gz
+*.venv
+simese_data/
+venv/
+ml-model/model.pt
