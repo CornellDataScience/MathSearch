@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
   similarity_scores = []
   for _, row in db.iterrows():
-    similarity_scores.append(get_similarity("dataset/"+target, "dataset/"+row["image_name"]))
+    similarity_scores.append(get_similarity(target, row["image_name"]))
   
   top5 = pd.DataFrame(columns=db.columns)
   top5_index = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i])[-5:]
