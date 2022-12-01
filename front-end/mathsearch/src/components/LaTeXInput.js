@@ -7,10 +7,23 @@ import "./LaTeXInput.css";
 
 function updatePreview() {
    let rawtext = document.getElementById('MathInput').value;
-  console.log(rawtext);
    ReactDOM.render(<BlockMath math={rawtext}/>,
                 document.getElementById('MathPreview'));
 }
+
+function get_image() {
+  let tex = document.getElementById('MathInput').value;
+  var url = "http://chart.apis.google.com/chart?&cht=tx&chl=" +
+      encodeURIComponent(tex) +
+      "&chof=png";
+  return url;
+}
+
+function log_image() {
+  let url = get_image();
+  console.log(url);
+}
+
 
 function LaTeXInput() {
 
@@ -30,9 +43,11 @@ function LaTeXInput() {
               <div id="MathPreview"></div>
             </div>
         </div>
+        {/* <button onClick={log_image}>log image!</button> */}
       </div>
     </>
   );
 }
 
 export default LaTeXInput;
+export {get_image};

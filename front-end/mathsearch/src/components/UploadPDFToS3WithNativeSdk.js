@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import AWS from 'aws-sdk'
+import {v4} from 'uuid';
+import {get_image} from './LaTeXInput'
 
 const S3_BUCKET = 'mathsearch-intermediary';
 const REGION = 'us-east-1';
 
+const keyprefix = 'inputs/';
 
 AWS.config.update({
   accessKeyId: process.env.REACT_APP_ACCESS_KEY_ID,
@@ -11,8 +14,17 @@ AWS.config.update({
 })
 
 const myBucket = new AWS.S3({
-  params: { Bucket: S3_BUCKET },
-  region: REGION,
+  params: {
+    Bucket: S3_BUCKET
+  },
+  region: REGION
+})
+
+const mySQS = new AWS.SQS({
+  params: {
+    QueueUrl: process.env.REACT_APP_SQS_URL
+  },
+  region: REGION
 })
 
 const UploadPDFToS3WithNativeSdk = () => {
@@ -24,22 +36,73 @@ const UploadPDFToS3WithNativeSdk = () => {
     setSelectedFile(e.target.files[0]);
   }
 
-  const uploadFile = (file) => {
+  function validateResponse(response) {
+    if (!response.ok) {
+        throw Error(response.statusText);
+    }
+    return response;
+  }
 
-    const params = {
-      ACL: 'public-read',
-      Body: file,
-      Bucket: S3_BUCKET,
-      Key: file.name
-    };
+  const uploadFile = async (file) => {
+    const uuidKey = v4();
+    const fileKey = keyprefix + uuidKey + "_pdf";
+    const imageKey = keyprefix + uuidKey + "_image";
 
-    myBucket.putObject(params)
-      .on('httpUploadProgress', (evt) => {
-        setProgress(Math.round((evt.loaded / evt.total) * 100))
+    var imageURL = get_image();
+
+    console.log(imageURL);
+
+    fetch(imageURL)
+      .then(validateResponse)
+      .then(response => response.blob())
+      .then(blob => {
+         const imageParams = {
+           ACL: 'public-read',
+           Body: blob,
+           Bucket: S3_BUCKET,
+           Key: imageKey
+         }
+
+          myBucket.putObject(imageParams)
+                  .send((err) => {
+                    if (err) console.log(err)
+                  })
       })
-      .send((err) => {
-        if (err) console.log(err)
-      })
+      .then(() => {
+        const pdfParams = {
+          ACL: 'public-read',
+          Body: file,
+          Bucket: S3_BUCKET,
+          Key: fileKey
+        };
+
+        myBucket.putObject(pdfParams)
+                .on('httpUploadProgress', (evt) => {
+                  setProgress(Math.round((evt.loaded / evt.total) * 100))
+                })
+                .send((err) => {
+                  if (err) console.log(err)
+                })
+
+        let msg = {
+          uuid: uuidKey,
+          pdf_path: fileKey,
+          image_path: imageKey
+        }
+
+        const sqsParams = {
+          MessageBody: JSON.stringify(msg)
+        }
+
+        mySQS.sendMessage(sqsParams, function(err, data){
+          if (err) {
+            console.log("Error: ", err)
+          } else {
+            console.log("Success: ", data.MessageId);
+          }
+        });
+
+      });
   }
 
 
