@@ -3,3 +3,5 @@ ml-model/output/
 ml-model/crop_formula_images/
 training.zip
 output.zip
+dataset/
+simese_data/
