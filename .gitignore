@@ -1,5 +1,14 @@
+
 ml-model/formula_images/
 ml-model/output/
 ml-model/crop_formula_images/
 training.zip
 output.zip
+data/
+.DS_Store
+*.gz
+*.png
+im2latex/
+ml-model/model.pt
+simese_data/
+venv/
