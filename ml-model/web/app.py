@@ -1,3 +1,8 @@
+"""
+chmod 600 mathsearch-backend.pem
+ssh -i "mathsearch-backend.pem" ubuntu@ec2-18-207-249-45.compute-1.amazonaws.com
+"""
+
 from flask import Flask, flash, redirect, url_for, request
 # from werkzeug.utils import secure_filename
 import os
