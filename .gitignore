@@ -6,3 +6,5 @@ im2latex/
 ml-model/model.pt
 simese_data/
 venv/
+dataset/
+*.pem
