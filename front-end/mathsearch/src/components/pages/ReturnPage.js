@@ -26,6 +26,11 @@ function ReturnPage() {
     changePage(+1);
   }
 
+  /* function to display pages */
+  const numbers = [1, 2, 3, 4, 5]
+  const listItems = numbers.map((number) =>
+  <li>Page {number}</li>
+);
 
   return (
     <>
@@ -35,14 +40,25 @@ function ReturnPage() {
           {pageNumber > 1 &&
           <button onClick={changePageBack}>Previous Page</button>}
           {pageNumber < numPages &&
-           <button onClick={changePageNext}>Next Page</button>}
+          <button onClick={changePageNext}>Next Page</button>}
           </div>
-           <p>
+          <p>
             Page {pageNumber} of {numPages}
-           </p>
-          <Document file="./sample.pdf" onLoadSuccess={onDocumentLoadSuccess}>
-            <Page pageNumber={pageNumber} />
-          </Document>
+          </p>
+          <div className="results">
+            <Document file="./sample.pdf" onLoadSuccess={onDocumentLoadSuccess}>
+              <Page pageNumber={pageNumber} />
+            </Document>
+            <div className="sidebar">
+              <p>Results on:</p>
+              {/* <ol>
+                <li>Page 2</li>
+                <li>Page 42</li>
+                <li>Page 64</li>
+              </ol> */}
+              <ol>{listItems}</ol> 
+            </div>
+          </div>
           <p>
             Page {pageNumber} of {numPages}
           </p>
