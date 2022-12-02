@@ -57,8 +57,9 @@ class SiameseNetwork(nn.Module):
 
   def forward(self, input1, input2):
 		# It will take the input 'x' until it returns the feature vector called 'out'
-    output1 = self.forward_once(input1)
-    output2 = self.forward_once(input2)
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+        return output1, output2
 
 #     return output1, output2
 # class SiameseNetwork(nn.Module):
@@ -157,10 +158,10 @@ class SiameseDataset:
         image2_path = os.path.join(self.train_dir, self.train_df.iat[index, 1])
 
         # Loading the image
-        img0 = Image.open(image1_path)
-        img1 = Image.open(image2_path)
-        img0 = img0.convert("L")
-        img1 = img1.convert("L")
+        img0 = Image.open(image1_path).convert(mode='RGB')
+        img1 = Image.open(image2_path).convert(mode='RGB')
+        # img0 = img0.convert("L")
+        # img1 = img1.convert("L")
 
         # Apply image transformations
         if self.transform is not None:
@@ -241,8 +242,12 @@ if __name__ == "__main__":
       loss=[] 
       counter=[]
       iteration_number = 0
+
+      k = 0
       for epoch in range(1, 2):
           for i, data in enumerate(test_dataloader,0):
+              k += 1
+              if k % 10 == 0: print(k)
           # for i, data in enumerate(train_dataloader,0):
               img0, img1 , label = data
               # img0, img1 , label = img0.cuda(), img1.cuda() , label.cuda()
@@ -260,8 +265,9 @@ if __name__ == "__main__":
 
 
   #set the device to cuda
-  # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  device = torch.device('cpu')
+  device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+
+#   device = torch.device('cpu')
   model = train()
   torch.save(model.state_dict(), "model.pt")
   print("Model Saved Successfully") 
