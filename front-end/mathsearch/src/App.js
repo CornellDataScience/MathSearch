@@ -13,6 +13,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 // Internal component imports
 import NavBar from './components/NavBar.js';
 import Home from './components/pages/Home.js';
+import ReturnPage from './components/pages/ReturnPage.js';
 
 // Internal CSS imports
 import './App.css';
@@ -45,6 +46,7 @@ function App() {
           {/* Add Routes */}
           {/*  <Route exact path='/' element={<Component />} /> */}
           <Route exact path='/' element={<Home />} />
+          <Route exact path='/returnpage' element={<ReturnPage />}/>
         </Routes>
       </Router>
     </>
