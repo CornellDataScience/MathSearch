@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {useNavigate} from 'react-router-dom';
 import AWS from 'aws-sdk'
 import {v4} from 'uuid';
 import {get_image} from './LaTeXInput'
@@ -27,10 +28,16 @@ const mySQS = new AWS.SQS({
   region: REGION
 })
 
-const UploadPDFToS3WithNativeSdk = () => {
+function get_file() {
+  let file = document.getElementById('file_input');
+  return file;
+}
+
+function UploadPDFToS3WithNativeSdk({selectedFile}){
+
+  const navigate = useNavigate();
 
   const [progress, setProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleFileInput = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -102,15 +109,18 @@ const UploadPDFToS3WithNativeSdk = () => {
           }
         });
 
+        navigate('/returnpage');
+
       });
   }
 
 
   return <div>
     <div>Native SDK File Upload Progress is {progress}%</div>
-    <input type="file" onChange={handleFileInput} />
+    <input id="file_input" type="file" onChange={handleFileInput} />
     <button onClick={() => uploadFile(selectedFile)}> Upload to S3</button>
   </div>
 }
 
 export default UploadPDFToS3WithNativeSdk;
+export {get_file};

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack5';
-
+import {get_file} from '../UploadPDFToS3WithNativeSdk';
 
 import '../../App.css';
 import './ReturnPage.css'
@@ -15,6 +15,8 @@ function ReturnPage() {
   }
 
   function changePage(offset) {
+    console.log("This");
+    console.log(get_file());
     setPageNumber(prevPageNumber => prevPageNumber + offset);
   }
 
@@ -41,7 +43,7 @@ function ReturnPage() {
             Page {pageNumber} of {numPages}
            </p>
           <Document file="./sample.pdf" onLoadSuccess={onDocumentLoadSuccess}>
-            <Page pageNumber={pageNumber} />
+            <Page width="1000" pageNumber={pageNumber} />
           </Document>
           <p>
             Page {pageNumber} of {numPages}

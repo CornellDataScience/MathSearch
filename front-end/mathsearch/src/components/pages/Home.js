@@ -6,14 +6,14 @@ import LaTeXInput from '../LaTeXInput.js';
 import '../../App.css';
 import './Home.css'
 
-function Home() {
+function Home({selectedFile}) {
   return (
     <>
       <div className="home-container">
         <div className="home-content">
           <h1 className="title">MathSearch</h1>
           <LaTeXInput/>
-          <UploadPDFToS3WithNativeSdk />
+          <UploadPDFToS3WithNativeSdk selectedFile=selectedFile/>
         </div>
       </div>
     </>

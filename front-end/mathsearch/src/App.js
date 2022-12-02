@@ -1,5 +1,5 @@
 // External library imports
-import React from 'react';
+import React, {useState} from 'react';
 
 import {
   BrowserRouter as Router,
@@ -18,25 +18,9 @@ import ReturnPage from './components/pages/ReturnPage.js';
 // Internal CSS imports
 import './App.css';
 
+const [selectedFile, setSelectedFile] = useState(null);
 
 function App() {
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // return (                                                                                           //
-  //   <div className="App">                                                                            //
-  //     <NavBar />                                                                                     //
-  //                                                                                                    //
-  //     <div className="input-section">                                                                //
-  //       <h1 className="title">MathSearch</h1>                                                        //
-  //       <form>                                                                                       //
-  //         <input className="text-field" type="text" name="latex" placeholder="Type LaTex here..." /> //
-  //         {/* <input class="pdf-select" type="file" name="pdf" /> */}                                //
-  //       </form>                                                                                      //
-  //       <UploadPDFToS3WithNativeSdk />                                                               //
-  //     </div>                                                                                         //
-  //   </div>                                                                                           //
-  // );                                                                                                 //
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
    return (
     <>
       <Router>
