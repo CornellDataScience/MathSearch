@@ -5,3 +5,4 @@ data/
 simese_data/
 venv/
 ml-model/model.pt
+training_data/
