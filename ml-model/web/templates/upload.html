@@ -3,22 +3,22 @@
 <h2>Select a file to upload</h2>
 <p>
 	{% with messages = get_flashed_messages() %}
-	  {% if messages %}
-		<ul class=flashes>
-		{% for message in messages %}
-		  <li>{{ message }}</li>
-		{% endfor %}
-		</ul>
-	  {% endif %}
-	{% endwith %}
+	{% if messages %}
+<ul class=flashes>
+	{% for message in messages %}
+	<li>{{ message }}</li>
+	{% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
 </p>
 <form method="post" action="/" enctype="multipart/form-data">
-    <dl>
+	<dl>
 		<p>
 			<input type="file" name="file" autocomplete="off" required>
 		</p>
-    </dl>
-    <p>
+	</dl>
+	<p>
 		<input type="submit" value="Submit">
 	</p>
 </form>
