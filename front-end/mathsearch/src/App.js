@@ -18,9 +18,9 @@ import ReturnPage from './components/pages/ReturnPage.js';
 // Internal CSS imports
 import './App.css';
 
-const [selectedFile, setSelectedFile] = useState(null);
-
 function App() {
+   const [selectedFile, setSelectedFile] = useState(null);
+
    return (
     <>
       <Router>
@@ -29,8 +29,8 @@ function App() {
         <Routes>
           {/* Add Routes */}
           {/*  <Route exact path='/' element={<Component />} /> */}
-          <Route exact path='/' element={<Home />} />
-          <Route exact path='/returnpage' element={<ReturnPage />}/>
+          <Route exact path='/' element={<Home/>} />
+          <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile}/>}/>
         </Routes>
       </Router>
     </>

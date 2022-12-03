@@ -4,8 +4,8 @@ import AWS from 'aws-sdk'
 import {v4} from 'uuid';
 import {get_image} from './LaTeXInput'
 
-const S3_BUCKET = 'mathsearch-intermediary';
-const REGION = 'us-east-1';
+const S3_BUCKET = process.env.REACT_APP_S3_BUCKET;
+const REGION = process.env.REACT_APP_REGION;
 
 const keyprefix = 'inputs/';
 
@@ -28,15 +28,15 @@ const mySQS = new AWS.SQS({
   region: REGION
 })
 
-function get_file() {
-  let file = document.getElementById('file_input');
-  return file;
-}
-
-function UploadPDFToS3WithNativeSdk({selectedFile}){
+function UploadPDFToS3WithNativeSdk(){
 
   const navigate = useNavigate();
 
+  const toReturnPage = () => {
+    navigate('/returnpage', {state:{selectedFile: selectedFile}})
+  }
+
+  const [selectedFile, setSelectedFile] = useState(null);
   const [progress, setProgress] = useState(0);
 
   const handleFileInput = (e) => {
@@ -109,7 +109,7 @@ function UploadPDFToS3WithNativeSdk({selectedFile}){
           }
         });
 
-        navigate('/returnpage');
+        toReturnPage();
 
       });
   }
@@ -123,4 +123,3 @@ function UploadPDFToS3WithNativeSdk({selectedFile}){
 }
 
 export default UploadPDFToS3WithNativeSdk;
-export {get_file};
