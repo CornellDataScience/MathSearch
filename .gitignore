@@ -4,6 +4,7 @@ ml-model/output/
 ml-model/crop_formula_images/
 training.zip
 output.zip
+
 data/
 .DS_Store
 *.gz
@@ -14,4 +15,7 @@ simese_data/
 venv/
 dataset/
 *.pem
+
 ml-model/web/__pycache__/app.cpython-39.pyc
+
+dataset/
