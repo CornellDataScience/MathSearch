@@ -8,6 +8,11 @@ output.zip
 data/
 .DS_Store
 *.gz
+*.venv
+simese_data/
+venv/
+ml-model/model.pt
+training_data/
 *.png
 im2latex/
 ml-model/model.pt
