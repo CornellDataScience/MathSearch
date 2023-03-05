@@ -2,10 +2,13 @@ from constants import *
 from datetime import datetime
 import os
 import boto3
+import urllib3
+from botocore.vendored import requests
 
 class DataHandler():
     def __init__(self):
         self.clients = [boto3.client('sqs'), boto3.client('s3')]
+        self.http = urllib3.PoolManager()
     
     def enqueue(self, queue_name, message):
         queue_url = self.clients[client_indices['sqs']].get_queue_url(QueueName = queue_name)['QueueUrl']
@@ -25,13 +28,8 @@ class DataHandler():
         except Exception as e:
             print("Error: ", e)
     
-    def invoke_model(self, image1, image2):
-        image1 = image.imread(image1)
-        image2 = image.imread(image2)
-
-        print(image1)
-        print(image2)
-
+    def invoke_model(self):
+        self.http.request('GET', "http://18.207.249.45/run")
 
     def process_event(self, event):
         sqs_message = event['Records'][0]['body']
@@ -47,16 +45,14 @@ class DataHandler():
         print(os.listdir('/tmp'))
 
         return file_name
-    
-    def upload_file_to_s3(self, s3_bucket, s3_object, directory="/tmp"):
-        """Uploads to S3 and returns the path name to the newly created object"""
+        
+    def get_object_url_from_s3(self, s3_bucket, s3_object, directory="/tmp"):
         file_name = s3_object.split('/')[-1]
-        extension = s3_object.split('.')[-1]
+        url_prefix = "https://mathsearch-intermediary.s3.amazonaws.com"
+        self.clients[client_indices['s3']].download_file(s3_bucket, s3_object, f'{directory}/mathsearch_{file_name}')        
+        print(os.listdir('/tmp'))
 
-        return_path = f"{'.'.join(s3_object.split('.')[:-1])}_UPLOADED.{extension}"
-        self.clients[client_indices['s3']].upload_file(f'{directory}/mathsearch_{file_name}', s3_bucket, return_path)
-
-        return return_path
+        return file_name
         
     def run(self):
         # Get new input
