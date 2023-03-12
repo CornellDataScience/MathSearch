@@ -2,7 +2,8 @@
 ml-model/formula_images/
 ml-model/output/
 ml-model/crop_formula_images/
-training.zip
+
+
 output.zip
 *.zip
 
@@ -21,7 +22,7 @@ ml-model/model.pt
 simese_data/
 venv/
 *.pem
-
+ml-model/paths_output.csv
 
 ml-model/web/__pycache__/app.cpython-39.pyc
 
