@@ -10,5 +10,7 @@ https://docs.google.com/document/d/1vf85MGTYNEiqmlLApEDHS9gEdpwMC6Jg1svBZvlxrbo/
 ##### dataset/ - code for dataset augmentation
 ##### files/ - code for VGG
 ##### model/ - code for VGG and Siamese neural networks
-##### archive/ - deprecated folders
 ##### yolov5/ - all the code for yolov5
+
+
+##### archive/ - deprecated folders 

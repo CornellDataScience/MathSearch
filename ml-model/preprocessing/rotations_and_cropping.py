@@ -20,10 +20,15 @@ import random
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
-to_tensor = T.ToTensor()
-to_pil = T.ToPILImage()
+class Rotatations:
+    """Rotate by one of the given angles."""
 
-blur = T.GaussianBlur((7, 13))
+    def __init__(self, angles):
+        self.angles = angles
+
+    def __call__(self, x):
+        angle = random.choice(self.angles)
+        return TF.rotate(x, angle)
 
 
 def img_input(file_name, name):
@@ -37,14 +42,6 @@ def img_input(file_name, name):
 # image = image.reshape((dims[1], dims[2], dims[0]))
 
 # print(image.shape)
-
-
-proportionality = 0.7
-
-path = Path('output')
-
-if not path.exists():
-    os.mkdir(path)
 
 
 def augment(name, img):
@@ -94,15 +91,17 @@ for filename in tqdm(os.listdir('crop_formula_images')):
     augment(name, img)
 
 
-class Rotatations:
-    """Rotate by one of the given angles."""
-
-    def __init__(self, angles):
-        self.angles = angles
-
-    def __call__(self, x):
-        angle = random.choice(self.angles)
-        return TF.rotate(x, angle)
-
-
 # randomcrop = T.RandomCrop()
+
+if __name__ == '__main__':
+    to_tensor = T.ToTensor()
+    to_pil = T.ToPILImage()
+
+    blur = T.GaussianBlur((7, 13))
+
+    proportionality = 0.7
+
+    path = Path('output')
+
+    if not path.exists():
+        os.mkdir(path)
