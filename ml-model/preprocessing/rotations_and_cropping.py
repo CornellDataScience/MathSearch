@@ -1,3 +1,7 @@
+'''
+File to introduce random rotations and croppings to the im2latex dataset.
+'''
+
 from PIL import Image
 
 from pathlib import Path
@@ -21,7 +25,9 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 class Rotatations:
-    """Rotate by one of the given angles."""
+    """Must be created for pytorch image augmentation.
+
+    Rotate by one of the given angles."""
 
     def __init__(self, angles):
         self.angles = angles
@@ -32,6 +38,16 @@ class Rotatations:
 
 
 def img_input(file_name, name):
+    '''
+    Convert an image to RGB.
+
+    Args:
+        file_name: path to file
+        name: id for image
+
+    Returns:
+        (name, image): (id of image, image as RGB)
+    '''
     image = Image.open(str(Path(file_name)))
     image = image.convert('RGB')
 
@@ -45,6 +61,19 @@ def img_input(file_name, name):
 
 
 def augment(name, img):
+    '''
+    Add random croppings and a rotation to an latex-rendered-image.
+
+    Args:
+        name - id of image
+        img - image as a numpy array
+
+    Returns:
+        None
+
+    Raises:
+        None
+    '''
 
     temp_path = path / name
 
@@ -85,14 +114,7 @@ def augment(name, img):
         j.save(temp_path_folder / f'{i}_blur.jpeg')
 
 
-# with ProcessPoolExecutor(max_workers=4) as executor:
-for filename in tqdm(os.listdir('crop_formula_images')):
-    name, img = img_input(f'crop_formula_images/{filename}', filename)
-    augment(name, img)
-
-
 # randomcrop = T.RandomCrop()
-
 if __name__ == '__main__':
     to_tensor = T.ToTensor()
     to_pil = T.ToPILImage()
@@ -105,3 +127,8 @@ if __name__ == '__main__':
 
     if not path.exists():
         os.mkdir(path)
+
+    # with ProcessPoolExecutor(max_workers=4) as executor:
+    for filename in tqdm(os.listdir('crop_formula_images')):
+        name, img = img_input(f'crop_formula_images/{filename}', filename)
+        augment(name, img)

@@ -1,3 +1,8 @@
+'''
+Crop function.
+'''
+
+
 from PIL import Image
 import os
 from tqdm import tqdm
@@ -10,7 +15,17 @@ dir_save = "im2latex/crop_formula_images/"
 
 def crop(dir, dir_save):
     '''
+    Crops a directory of image rendered latex.
 
+    Args:
+        dir: input directory
+        dir_save: output directory
+
+    Returns:
+        None
+
+    Raises:
+        None
     '''
     for filename in tqdm(os.listdir(dir)):
         f = os.path.join(dir, filename)
