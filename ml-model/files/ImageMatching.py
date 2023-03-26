@@ -23,6 +23,17 @@ class FeatureExtractor(nn.Module):
     self.fc = model.classifier[0]
   
   def forward(self, x):
+    """Computes embedding layer of an image. 
+
+    Args:
+      x: torch tensor representing image.
+
+    Returns:
+      Embedding tensor.
+
+    Raises:
+      None
+    """
 		# It will take the input 'x' until it returns the feature vector called 'out'
     out = self.features(x)
     out = self.pooling(out)
@@ -32,14 +43,35 @@ class FeatureExtractor(nn.Module):
 
 
 def get_similarity(img_1_path, img_2_path):
-      img1 = torch.from_numpy(np.array(Image.open(img_1_path).convert(mode='RGB'))).permute(2, 0, 1).unsqueeze(0).float()
-      img2 = torch.from_numpy(np.array(Image.open(img_2_path).convert(mode='RGB'))).permute(2, 0, 1).unsqueeze(0).float()
-      one = feature_extrator.forward(img1).detach().flatten()
-      two = feature_extrator.forward(img2).detach().flatten()
-      return np.dot(one, two)/(np.linalg.norm(one)*np.linalg.norm(two))
+  """Computes similarity measure between 2 images. 
+
+  Args:
+    img1_name: string address to 1st image
+    img2_name: string address to 2nd image
+
+  Returns:
+    Float cosine similarity from VGG embedding
+
+  Raises:
+      None
+  """
+  img1 = torch.from_numpy(np.array(Image.open(img_1_path).convert(mode='RGB'))).permute(2, 0, 1).unsqueeze(0).float()
+  img2 = torch.from_numpy(np.array(Image.open(img_2_path).convert(mode='RGB'))).permute(2, 0, 1).unsqueeze(0).float()
+  one = feature_extrator.forward(img1).detach().flatten()
+  two = feature_extrator.forward(img2).detach().flatten()
+  return np.dot(one, two)/(np.linalg.norm(one)*np.linalg.norm(two))
 
 
 if __name__ == "__main__":
+  """
+  Returns top5.csv containing top 5 matches of [target.json] 
+  by iterating over all rows in [img_database.csv]
+
+  Args:
+    target.json: file name of target image
+    img_database.csv: table with 2 rows 
+      (image_name = file name, image_source = which pdf its from)
+  """
   vgg19_model = models.vgg19(pretrained=True)
   feature_extrator = FeatureExtractor(vgg19_model)
 
