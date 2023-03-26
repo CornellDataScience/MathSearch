@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
+import "./Results.css";
 
 const Results = () => {
   const [numPages, setNumPages] = useState(null);
@@ -24,28 +25,62 @@ const Results = () => {
     if (target) {
       target.scrollIntoView({ behavior: "smooth" });
     }
-  }
+  };
+
+  /** index : value = result item : page number */
+  const pages = [1, 3, 5, 7, 51];
 
   return (
     <>
       <div style={{ background: "lightgray" }}>
-      <button onClick={() => scroll("5")}>Push</button>
         <br />
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <Document file="sample.pdf" onLoadSuccess={onDocumentLoadSuccess}>
-            {renderPages().map((item, index) => (
-              <div id={index + 1}>
-                {item}
-                <br />
+        <div className="grid-container">
+          {/* Empty column */}
+          <div></div>
+
+          {/* PDF */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              height: "90vh",
+              overflow: "scroll",
+            }}
+          >
+            <Document file="sample.pdf" onLoadSuccess={onDocumentLoadSuccess}>
+              {renderPages().map((item, index) => (
+                <div id={index + 1}>
+                  {item}
+                  <br />
+                </div>
+              ))}
+            </Document>
+          </div>
+
+          {/* Nav buttons */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "1em",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ padding: "1em" }}>
+              <div style={{ textAlign: "center", paddingBottom: "2em" }}>
+                <b>Results</b>
               </div>
-            ))}
-          </Document>
-          <p>
-            Page {pageNumber} of {numPages}
-          </p>
+              {pages.map((item, index) => (
+                <div>
+                  <button className="button" onClick={() => scroll(item)}>
+                    Page {item}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <div id="h">Hello</div>
     </>
   );
 };
