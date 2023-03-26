@@ -69,10 +69,10 @@ ALLOWED_EXTENSIONS = set(['pdf'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-@app.route('/upload')
-def upload_form():
-    return render_template('upload.html')
+# archived - user should upload via frontend but not backend
+# @app.route('/upload')
+# def upload_form():
+#     return render_template('upload.html')
 
 
 @app.route('/upload', methods=['POST'])
