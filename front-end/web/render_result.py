@@ -3,6 +3,7 @@ import sys
 import argparse
 import PyPDF2
 import pdf2image
+from typing import List
 
 '''
 
@@ -14,19 +15,15 @@ python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 
 @ Author: Emerald
 '''
 
-def write_pdf(filename,pages):
-	if (".pdf" not in filename):
-		print("Not a pdf file")
-
-	with open(filename, 'rb') as file:
+def write_pdf(pdf_in, pdf_out, new_pages:List[int]):
+	with open(pdf_in, 'rb') as file:
 		pdf = PyPDF2.PdfFileReader(file)
-
 		# Create a new PDF with the replacement page
 		new_pdf = PyPDF2.PdfFileWriter()
-		with open('new_page.pdf', 'rb') as new_page_file:
-			new_page = PyPDF2.PdfFileReader(new_page_file)
-			
-			new_pdf.addPage(new_page.getPage(0))
+		for page in pdf:
+			print(page)
+			if page in new_pages:
+				new_pdf.merge_page(page)
 
 		# Replace the page in the existing PDF
 		# pdf.getPage(page_number)  # Replace `page_number` with the page number you want to replace
@@ -99,9 +96,7 @@ def main(argv):
 		draw_bounding_boxes(image_path_in,table[page],image_pat_out)
 	
 	# TODO 3: merge the rendered images to the pdf, save to /pdf_out
-
-
-	# draw_bounding_boxes(image_path, bounding_boxes, output_path)
+	write_pdf(pdf_in, pdf_out, pages)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
