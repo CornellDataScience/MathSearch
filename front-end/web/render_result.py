@@ -5,6 +5,7 @@ import PyPDF2
 import pdf2image
 from PIL import Image
 import json
+import time
 
 '''
 Takes in two parameters: -f filename -c coordinates
@@ -40,11 +41,8 @@ def draw_bounding_box(image_path_in, bounding_box, image_path_out):
 	cv2.rectangle(image, upper_left, bottom_right, SKYBLUE, 3)
 	cv2.imwrite(image_path_out, image)
 
-	
-
 
 def main(argv):
-
 	parser = argparse.ArgumentParser(
 					prog='render_results.py',
 					description='render yolov5 equation bonding box on image',
@@ -105,5 +103,7 @@ def main(argv):
 
 # python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
 if __name__ == "__main__":
-   main(sys.argv[1:])
-   
+	start = time.time()
+	main(sys.argv[1:])
+	end = time.time()
+	print("Time used:",end - start)
