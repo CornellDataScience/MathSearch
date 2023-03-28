@@ -3,39 +3,24 @@ import sys
 import argparse
 import PyPDF2
 import pdf2image
-from typing import List
+from PIL import Image
+import json
 
 '''
+Takes in two parameters: -f filename -c coordinates
+Save pdf [filename.pdf] with bounding boxes and the result page list [filename.json] to dir pdf_out
 
-Takes in an image from path [./src], and a bounding box coordinates in yolov5 format
-Render the bounding boxes on the image, and save the image to the output path [./render]
+@ Param:
+-f filename.pdf
+-c in (regex) syntax of: [page_number x y w h]+
 
-Example usage:
-python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698
+@ Example:
+python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
+
 @ Author: Emerald
-'''
+'''	
 
-def write_pdf(pdf_in, pdf_out, new_pages:List[int]):
-	with open(pdf_in, 'rb') as file:
-		pdf = PyPDF2.PdfFileReader(file)
-		# Create a new PDF with the replacement page
-		new_pdf = PyPDF2.PdfFileWriter()
-		for page in pdf:
-			print(page)
-			if page in new_pages:
-				new_pdf.merge_page(page)
-
-		# Replace the page in the existing PDF
-		# pdf.getPage(page_number)  # Replace `page_number` with the page number you want to replace
-		# pdf.removePage(page_number - 1)
-		# pdf.insertPage(new_pdf.getPage(0), page_number - 1)
-
-		# Save the updated PDF
-		with open('updated_pdf.pdf', 'wb') as output:
-			pdf.write(output)
-		
-
-def draw_bounding_boxes(image_path_in, bounding_box, image_path_out):
+def draw_bounding_box(image_path_in, bounding_box, image_path_out):
 	image = cv2.imread(image_path_in)
 	height, width, _ = image.shape
 	x, y, w, h = bounding_box
@@ -51,9 +36,11 @@ def draw_bounding_boxes(image_path_in, bounding_box, image_path_out):
 	GREEN = (0,255,0)
 	SKYBLUE = (255,191,0)
 
-	# cv2 uses BGR color instead of RGB
+	# note cv2 uses BGR color instead of RGB
 	cv2.rectangle(image, upper_left, bottom_right, SKYBLUE, 3)
 	cv2.imwrite(image_path_out, image)
+
+	
 
 
 def main(argv):
@@ -61,19 +48,20 @@ def main(argv):
 	parser = argparse.ArgumentParser(
 					prog='render_results.py',
 					description='render yolov5 equation bonding box on image',
-					epilog='Example usage: \npython3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698')
+					epilog='Example usage: \npython3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889')
 	
 	parser.add_argument('-f','--file', help='pdf file name', required=True)
 	parser.add_argument('-c','--coordinates', nargs='+', help='bounding box coordinates', required=True)
 
-	IMG_IN_DIR = "src/"
-	IMG_OUT_DIR = "render/"
+	IMG_IN_DIR = "img_in/"
+	IMG_OUT_DIR = "img_out/"
 	PDF_IN_DIR = "pdf_in/"
 	PDF_OUT_DIR = "pdf_out/"
 
-	pdf_in = PDF_IN_DIR + parser.parse_args().file
-	pdf_out = PDF_OUT_DIR + parser.parse_args().file
-	pdf_no_ext = parser.parse_args().file[:-4]
+	pdf_name = parser.parse_args().file
+	pdf_in = PDF_IN_DIR + pdf_name
+	pdf_out = PDF_OUT_DIR + pdf_name
+	pdf_no_ext = pdf_name[:-4]
 
 	bounding_boxes = [float(x) for x in parser.parse_args().coordinates]
 	
@@ -84,20 +72,38 @@ def main(argv):
 	table = {}
 	for i in range(0, len(bounding_boxes), 5):
 		table[int(bounding_boxes[i])] = bounding_boxes[i+1:i+5]
-	pages = list(table.keys())
+	result_pages = list(table.keys())
 
-	# TODO 1: get result list, convert need box page in the pdf to png, save to /src
-	# TODO 2: call draw_bounding_boxes for each png, save to /render
+	# Done 1: get result list, convert need box page in the pdf to png, save to /img_in
+	# Done 2: call draw_bounding_boxes for each png, save to /img_out
 	images = pdf2image.convert_from_path(pdf_in)
-	for page in pages:
-		image_path_in = IMG_IN_DIR + pdf_no_ext + "_"+ str(page) + ".png"
-		images[page].save(image_path_in)
-		image_pat_out = IMG_OUT_DIR + pdf_no_ext + "_"+ str(page) + ".png"
-		draw_bounding_boxes(image_path_in,table[page],image_pat_out)
+	for i in result_pages:
+		image_path_in = IMG_IN_DIR + pdf_no_ext + "_"+ str(i) + ".png"
+		images[i].save(image_path_in)
+		image_path_out = IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".png"
+		draw_bounding_box(image_path_in,table[i],image_path_out)
+		# save img as pdf
+		image = Image.open(image_path_out).convert('RGB')
+		image.save(image_path_out[:-4]+".pdf")
 	
-	# TODO 3: merge the rendered images to the pdf, save to /pdf_out
-	write_pdf(pdf_in, pdf_out, pages)
+	# Done 3: merge the rendered images to the pdf, save to /pdf_out
+	with open(pdf_in, 'rb') as file:
+		with open(pdf_out, 'wb') as pdf_out:
+			pdf = PyPDF2.PdfReader(file)
+			output = PyPDF2.PdfWriter()
+			for i, page in enumerate(pdf.pages):
+				if i in result_pages:
+					output.addPage(PyPDF2.PdfReader(IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".pdf").pages[0])
+				else:
+					output.addPage(page)
+			output.write(pdf_out)
+	
+	# Done 4: save the result list to json file
+	result_pages_json = PDF_OUT_DIR + pdf_no_ext+".json"
+	with open(result_pages_json,'w') as file:
+		json.dump(result_pages, file, indent=4, separators=(",", ":"))
 
+# python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
 if __name__ == "__main__":
    main(sys.argv[1:])
    
