@@ -91,9 +91,9 @@ def main(argv):
 			output = PyPDF2.PdfWriter()
 			for i, page in enumerate(pdf.pages):
 				if i in result_pages:
-					output.addPage(PyPDF2.PdfReader(IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".pdf").pages[0])
+					output.add_page(PyPDF2.PdfReader(IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".pdf").pages[0])
 				else:
-					output.addPage(page)
+					output.add_page(page)
 			output.write(pdf_out)
 	
 	# Done 4: save the result list to json file
@@ -107,3 +107,30 @@ if __name__ == "__main__":
 	main(sys.argv[1:])
 	end = time.time()
 	print("Time used:",end - start)
+
+
+
+
+# import PyPDF2
+# from PyPDF2.pdf import PageObject
+# from PyPDF2.pdf import RectangleObject
+
+# # Open the PDF file
+# pdf_file = open('example.pdf', 'rb')
+# pdf_reader = PyPDF2.PdfFileReader(pdf_file)
+
+# # Select the page to add the rectangle to
+# page = pdf_reader.getPage(0)
+
+# # Define the rectangle dimensions and position
+# rect = RectangleObject([100, 100], [200, 200])
+
+# # Draw the rectangle on the page
+# page.mergeRect(rect)
+
+# # Save the modified PDF file
+# pdf_writer = PyPDF2.PdfFileWriter()
+# pdf_writer.addPage(page)
+
+# with open('modified.pdf', 'wb') as output_file:
+#     pdf_writer.write(output_file)
