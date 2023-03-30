@@ -46,6 +46,9 @@ def draw_bounding_box(image_path_in, bounding_box, image_path_out):
 	cv2.rectangle(image, upper_left, bottom_right, SKYBLUE, 3)
 	cv2.imwrite(image_path_out, image)
 def main(argv):
+	if len(argv)==1:
+		argv = argv[0].split()
+	# print(type(argv),type(argv[0]),argv)
 	parser = argparse.ArgumentParser(
 					prog='render_results.py',
 					description='render yolov5 equation bonding box on image',
@@ -59,12 +62,12 @@ def main(argv):
 	PDF_IN_DIR = "pdf_in/"
 	PDF_OUT_DIR = "pdf_out/"
 
-	pdf_name = parser.parse_args().file
+	pdf_name = parser.parse_args(argv).file
 	pdf_in = PDF_IN_DIR + pdf_name
 	pdf_out = PDF_OUT_DIR + pdf_name
 	pdf_no_ext = pdf_name[:-4]
 
-	bounding_boxes = [float(x) for x in parser.parse_args().coordinates]
+	bounding_boxes = [float(x) for x in parser.parse_args(argv).coordinates]
 	
 	if(len(bounding_boxes) % 5 != 0):
 		print("Invalid number of coordinates, must be multiple of 5")
@@ -105,6 +108,11 @@ def main(argv):
 	result_pages_json = PDF_OUT_DIR + pdf_no_ext+".json"
 	with open(result_pages_json,'w') as file:
 		json.dump(result_pages, file, indent=4, separators=(",", ":"))
+	
+	with open("/home/ubuntu/MathSearch/front-end/web/result_log","a") as file:
+		argv_str = " ".join(str(x) for x in argv)
+		print(argv_str)
+		file.write(time.strftime("%H:%M:%S", time.localtime()) + "\t" + argv_str)
 
 
 # python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
@@ -112,7 +120,7 @@ if __name__ == "__main__":
 	start = time.time()
 	main(sys.argv[1:])
 	end = time.time()
-	print("Time used:",end - start)
+	print("PDF saved! Time used:",end - start)
 
 """
 box

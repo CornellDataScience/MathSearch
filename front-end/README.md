@@ -1,14 +1,7 @@
 # React README
 located ./mathsearch README.md
 
-# Frontend Environment:
-1. Manually create venv with requirements.txt, and to activate the virtual environment  
-```
-cd /home/ubuntu/MathSearch/front-end
-source venv/bin/activate
-```
-
-# Current Public IP  
+# Frontend Public IP  
 ### As time: 5/29 3:12PM  
 Everytime EC2 instance gets restarted, new IP and new SSH ip is be generated and need to be updated for config and domain redirection.  
 - Public IP: `http://54.209.133.135`   
@@ -24,6 +17,14 @@ Everytime EC2 instance gets restarted, new IP and new SSH ip is be generated and
 
 ![frontend-arch](./etc/frontend-arch.png)
 
+# Frontend Environment:
+Coding should be done on EC2 directly for better testing purposes, and the venv is created at `/home/ubuntu/MathSearch/front-end/venv` already  
+If you have to test on your local for some reason, manually create venv with requirements.txt, and to activate the virtual environment   
+put your venv in `/home/ubuntu/MathSearch/front-end` and cd into it
+```
+source venv/bin/activate
+```
+
 # Commands You Need
 ## When Update React
 after `npm run build`
@@ -34,10 +35,17 @@ which is the same as `systemctl restart nginx`
 
 ## When Update Flask
 
-first kill gunicorn, grep pid and kill that pid
+first kill gunicorn, grep pid and kill that pid  
+it should be something like: 34702 pts/39 S+ 0:00 /.../python3 /.../gunicorn -b 127.0.0.1:8000 api:app
 ```
-sudo netstat -apn | grep 8000
+sudo ps ax | grep 8000
+kill <gunicorn_pid>
 ```
+or
+```
+pkill gunicorn
+```
+
 then
 ```
 cd cd ~/MathSearch/front-end/web
