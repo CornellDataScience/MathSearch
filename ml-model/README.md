@@ -17,7 +17,7 @@ https://docs.google.com/document/d/1vf85MGTYNEiqmlLApEDHS9gEdpwMC6Jg1svBZvlxrbo/
 
 ### Requirements
 Install requirements via `pip install -r requirements.txt` in the files/ directory.
-### Finetuning models
+### Finetuning
 
 - #### VGG 
     The dataset used to finetune VGG can be found here, in `training.zip`: https://huggingface.co/dyk34/Training-Data-MathSearch/tree/main.
@@ -30,5 +30,19 @@ Install requirements via `pip install -r requirements.txt` in the files/ directo
     The dataset to finetune Yolov5 can also be found here: https://huggingface.co/dyk34/Training-Data-MathSearch/tree/main.
 
 
-### Running models
+### Inference
+- #### VGG
+To run VGG in Pytorch, load a Siamese Network with 
+```
+vgg19_model = models.vgg19()
+net = SiameseNetwork(vgg19_model)
+model.load_state_dict(torch.load('model.pt'))
+```
 
+and run `model(image1, image2)` to get the latent space distance between image1 and image2.
+
+
+- #### Yolov5
+To segment an image, run
+
+`python segment/predict.py --weights {weights} --data  {img}`
