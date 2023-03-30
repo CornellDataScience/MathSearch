@@ -19,8 +19,13 @@ Save pdf [filename.pdf] with bounding boxes and the result page list [filename.j
 python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
 
 @ Author: Emerald
+
 '''	
 
+
+# page.scale_to(width: float, height: float)→ None
+
+#? Code that pdf -> png -> pdf
 def draw_bounding_box(image_path_in, bounding_box, image_path_out):
 	image = cv2.imread(image_path_in)
 	height, width, _ = image.shape
@@ -40,8 +45,6 @@ def draw_bounding_box(image_path_in, bounding_box, image_path_out):
 	# note cv2 uses BGR color instead of RGB
 	cv2.rectangle(image, upper_left, bottom_right, SKYBLUE, 3)
 	cv2.imwrite(image_path_out, image)
-
-
 def main(argv):
 	parser = argparse.ArgumentParser(
 					prog='render_results.py',
@@ -91,7 +94,9 @@ def main(argv):
 			output = PyPDF2.PdfWriter()
 			for i, page in enumerate(pdf.pages):
 				if i in result_pages:
-					output.add_page(PyPDF2.PdfReader(IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".pdf").pages[0])
+					new_page = PyPDF2.PdfReader(IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".pdf").pages[0]
+					new_page.scale_by(0.36)
+					output.add_page(new_page)
 				else:
 					output.add_page(page)
 			output.write(pdf_out)
@@ -101,6 +106,7 @@ def main(argv):
 	with open(result_pages_json,'w') as file:
 		json.dump(result_pages, file, indent=4, separators=(",", ":"))
 
+
 # python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
 if __name__ == "__main__":
 	start = time.time()
@@ -108,29 +114,17 @@ if __name__ == "__main__":
 	end = time.time()
 	print("Time used:",end - start)
 
+"""
+box
 
+x1,y1 -------
+|			|
+|			|
+--------- x2,y2
 
+--------x2,y1
+|			|
+|			|
+x1,y2--------
 
-# import PyPDF2
-# from PyPDF2.pdf import PageObject
-# from PyPDF2.pdf import RectangleObject
-
-# # Open the PDF file
-# pdf_file = open('example.pdf', 'rb')
-# pdf_reader = PyPDF2.PdfFileReader(pdf_file)
-
-# # Select the page to add the rectangle to
-# page = pdf_reader.getPage(0)
-
-# # Define the rectangle dimensions and position
-# rect = RectangleObject([100, 100], [200, 200])
-
-# # Draw the rectangle on the page
-# page.mergeRect(rect)
-
-# # Save the modified PDF file
-# pdf_writer = PyPDF2.PdfFileWriter()
-# pdf_writer.addPage(page)
-
-# with open('modified.pdf', 'wb') as output_file:
-#     pdf_writer.write(output_file)
+"""

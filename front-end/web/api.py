@@ -14,11 +14,11 @@ app = Flask(__name__)
 
 # https://54.209.133.135/result?f=<filename>&c=<1 0.11 0.22 0.33 0.44 2 0.11 0.22 0.33 0.44>
 # @app.route('/result', methods=['POST'])
-@app.route('/api/result')
+@app.route('/api/result',methods=['POST'])
 def result():
-    # filename = request.args.get('f')
-    # coords = request.args.get('c')
-    return "result page"
+    filename = request.args.get('f')
+    coords = request.args.get('c')
+    return "result page\n"+filename+"\n"+coords
 
 @app.route('/api/test')
 def print_test_api():
