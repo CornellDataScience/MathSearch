@@ -1,11 +1,7 @@
-# Frontend README
-
 # React README
 located ./mathsearch README.md
 
-# Front End Branch  
-
-# Environment:
+# Frontend Environment:
 1. Manually create venv with requirements.txt, and to activate the virtual environment  
 ```
 cd /home/ubuntu/MathSearch/front-end
@@ -14,8 +10,9 @@ source venv/bin/activate
 
 # Current Public IP  
 ### As time: 5/29 3:12PM  
+Everytime EC2 instance gets restarted, new IP and new SSH ip is be generated and need to be updated for config and domain redirection.  
 - Public IP: `http://54.209.133.135`   
-- SSH: `ec2-54-209-133-135.compute-1.amazonaws.com`
+- SSH: `ec2-54-209-133-135.compute-1.amazonaws.com`  
 
 # Architecture
 ## Endpoints:

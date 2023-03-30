@@ -2,6 +2,13 @@ from flask import Flask
 import urllib.request
 import requests
 
+
+"""
+Deploy flask. See https://github.com/CornellDataScience/MathSearch/blob/front-end/front-end/README.md
+#! Be sure to add api/ prefix for flask deployment, root for react app only
+
+"""
+
 app = Flask(__name__)
 # app = Flask(__name__, static_folder='../mathsearch/build', static_url_path='/')
 
@@ -21,10 +28,7 @@ def print_test_api():
 def print_test():
     return "yes the site is up - /test"
 
-@app.route('/api/temp')
-def print_temp():
-    return "yes temp is up - /test"
-
+# not needed, handled by nginx now
 # @app.route('/')
 # def index():
 #     return app.send_static_file('index.html')
