@@ -19,7 +19,7 @@ https://docs.google.com/document/d/1vf85MGTYNEiqmlLApEDHS9gEdpwMC6Jg1svBZvlxrbo/
 Install requirements via `pip install -r requirements.txt` in the files/ directory.
 ### Finetuning
 
-- #### VGG 
+- #### Siamese w/ VGG 
     The dataset used to finetune VGG can be found here, in `training.zip`: https://huggingface.co/dyk34/Training-Data-MathSearch/tree/main.
 
     Change the `data_dir, training_dir, training_csv, testing_csv, testing_dir` variables in the `siamese.py` file.
@@ -31,7 +31,7 @@ Install requirements via `pip install -r requirements.txt` in the files/ directo
 
 
 ### Inference
-- #### VGG
+- #### Siamese w/ VGG
 To run VGG in Pytorch, load a Siamese Network with 
 ```
 vgg19_model = models.vgg19()
