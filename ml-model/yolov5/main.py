@@ -112,3 +112,8 @@ def download_files():
 	s3_object = lines[1]
 	save_file(s3_bucket,s3_object+"_pdf")
 	save_file(s3_bucket,s3_object+"_image")
+
+if __name__ == "__main__":
+	# print(main("target_search.png")) # <- Why is there an arg? TypeError: main() takes 0 positional arguments but 1 was given - Emerald
+	# print(main())
+	print(print_ok())

@@ -49,12 +49,26 @@ To segment an image, run
 
 # SWE
 
+## Frontend Public IP
+### As time: 5/29 3:12PM
+Everytime EC2 instance gets restarted, new IP and new SSH ip is be generated and need to be updated for config and domain redirection.
+
+Public IP: `http://18.206.12.64`  
+SSH: `ec2-18-206-12-64.compute-1.amazonaws.com`
+
+## Nginx
+location of nginx conf: `/etc/nginx/nginx.conf`  
+be in `/home/ubuntu/MathSearch/ml-model/web`
+```
+gunicorn -b 127.0.0.1:8080 api:app
+```
+
 ## Backend Environment:
 - Option 1: `/opt/conda/bin`
 - Option 2: `/home/ubuntu/MathSearch/ml-model/venv/bin`
 - Option 3 (apply to SWE): packages all installed to default python, no need to activate any venv
 
-## Connect to s3
+## Access S3
 To test connection, run below (notice the "-" on the second option). It should display directory in s3 buckets or cat the file.
 
 option 1

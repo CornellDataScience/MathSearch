@@ -111,7 +111,7 @@ def run_model():
 	python_file = "/home/ubuntu/MathSearch/ml-model/yolov5/main.py"
 	subprocess.call([venv_py, python_file])
 	end = time.time()
-	return "ML model finished running.\nTime used: "+ str(end - start)
+	return "importing ok\naccessing yolov5/main.py ok" + "\n" + "ML model finished running.\nTime used: " + str(end - start)
 
 
 if __name__ == "__main__":
