@@ -21,6 +21,7 @@ def main():
 
 	remove_files()
 	download_files()
+	assert 1 == 0
 	
 	target_file_name = get_source_target_name()
 
@@ -43,10 +44,10 @@ def main():
 	# Uses best.torchscript weights 
 	# Input data: input_data/
 	# Writing output to ranking/dataset
-	call("./run_model.sh", shell=True)
+	call("bash run_model.sh", shell=True)
 
 	# Get list of files written to YOLO output, except for target_file_name
-	dir_list = os.listdir(dir + "crops/equation/")
+	dir_list = os.listdir(dir + "/crops/equation/")
 	print(dir_list) 
 	dir_list = [x for x in dir_list if x != target_file_name]
 
@@ -88,7 +89,7 @@ def remove_files():
 def save_file(s3_bucket,s3_object):
 	global DATA_FOLDER
 	file_name = s3_object.split('/')[-1]
-	# boto3.client('s3').download_file(s3_bucket, s3_object, f'{DATA_FOLDER}/{file_name}')
+	boto3.client('s3').download_file(s3_bucket, s3_object, f'{DATA_FOLDER}/{file_name}')
 	# TODO: accessing file not working, need to specify dir
 
 INFO_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_info/"
@@ -115,5 +116,5 @@ def download_files():
 
 if __name__ == "__main__":
 	# print(main("target_search.png")) # <- Why is there an arg? TypeError: main() takes 0 positional arguments but 1 was given - Emerald
-	# print(main())
-	print(print_ok())
+	print(main())
+	# print(print_ok())
