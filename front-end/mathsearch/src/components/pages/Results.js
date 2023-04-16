@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
 import "./Results.css";
+import pdf from "./sample.pdf"
 
 const Results = () => {
   const [numPages, setNumPages] = useState(null);
@@ -47,7 +48,7 @@ const Results = () => {
               overflow: "scroll",
             }}
           >
-            <Document file="sample.pdf" onLoadSuccess={onDocumentLoadSuccess}>
+            <Document file={pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
               {renderPages().map((item, index) => (
                 <div id={index + 1}>
                   {item}
