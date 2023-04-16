@@ -136,3 +136,16 @@ There's no references anymore. Too many sites had been used during debug. Just s
 1. `/etc/nginx/nginx.conf`
 2. `/lib/systemd/system/nginx.service`
 3. (unused) `/etc/nginx/sites-available/MathSearch`
+
+
+## Access S3
+To test connection, run below (notice the "-" on the second option). It should display directory in s3 buckets or cat the file.
+
+option 1
+```
+aws s3 ls s3://mathsearch-intermediary
+```
+option 2
+```
+aws s3 cp s3://mathsearch-intermediary/test.txt -
+```
