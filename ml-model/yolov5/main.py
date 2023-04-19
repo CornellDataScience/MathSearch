@@ -5,6 +5,10 @@ import pandas as pd
 import os
 import shutil
 import boto3
+import io
+from io import BytesIO
+import cv2
+
 
 # TODO this file is very bad right now. ML model team need to rewrite it.
 # Please try use absolute path
@@ -118,3 +122,21 @@ if __name__ == "__main__":
 	# print(main("target_search.png")) # <- Why is there an arg? TypeError: main() takes 0 positional arguments but 1 was given - Emerald
 	print(main())
 	# print(print_ok())
+
+""" Accessing the S3 buckets using boto3 client """
+s3_client = boto3.client('s3')
+s3_bucket_name = 'filename_prod'
+s3 = boto3.resource('s3',
+                    aws_access_key_id='YOUR_ACCESS_KEY_ID',
+                    aws_secret_access_key='YOUR_SECRET_ACCESS_KEY')
+
+""" Getting data jpeg from the AWS S3 bucket and store in variable """
+
+def image_from_s3(s3_bucket_name, keyfile_image):
+    my_bucket = s3.Bucket(s3_bucket_name)
+    keyfile_image = 'myImage.jpg'
+    my_bucket = s3.Bucket(s3_bucket_name)
+    image = my_bucket.Object(keyfile_image)
+    img_data = image.get().get('Body').read()
+    return cv2.imread(io.BytesIO(img_data))
+
