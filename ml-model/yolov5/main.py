@@ -140,5 +140,3 @@ def image_from_s3(s3_bucket_name, keyfile_image):
     img_data = image.get().get('Body').read()
     return cv2.imread(io.BytesIO(img_data))
 
-		'Hello'
-
