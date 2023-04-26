@@ -8,6 +8,8 @@ import boto3
 import io
 from io import BytesIO
 import cv2
+import sys
+# import ConfigParser
 
 
 # TODO this file is very bad right now. ML model team need to rewrite it.
@@ -23,9 +25,12 @@ def main():
 	"""
 	print("running yolov5/main.py...")
 
-	remove_files()
-	download_files()
-	assert 1 == 0
+	# remove_files()
+	# download_files()
+	# assert 1 == 0
+
+	# string of image_path
+	image_path = sys.argv[1]
 	
 	target_file_name = get_source_target_name()
 
@@ -120,21 +125,20 @@ def download_files():
 
 if __name__ == "__main__":
 	# print(main("target_search.png")) # <- Why is there an arg? TypeError: main() takes 0 positional arguments but 1 was given - Emerald
+	image_path = sys.argv[1]
+	print(image_path)
 	print(main())
 	# print(print_ok())
 
-def get_config_dict():
-    if not hasattr(get_config_dict, 'config_dict'):
-        get_config_dict.config_dict = dict(config.items('AWS Access'))
-    return get_config_dict.config_dict
-
 """ Accessing the S3 buckets using boto3 client """
+config = ConfigParser.ConfigParser()
+config.readfp(open(r'config.py'))
 config_details = get_config_dict()
 s3_client = boto3.client('s3')
 s3_bucket_name = 'mathsearch-intermediary'
 s3 = boto3.resource('s3',
-                    aws_access_key_id= config_details['ACCES_KEY_ID'] ,
-                    aws_secret_access_key= config_details['SECRET_ACCESS_KEY'])
+                    aws_access_key_id= config.get('AWS Access', 'ACCESS_KEY_ID') ,
+                    aws_secret_access_key= config.get('AWS Access','SECRET_ACCESS_KEY'))
 
 """ Getting data jpeg from the AWS S3 bucket and store in variable """
 
