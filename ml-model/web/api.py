@@ -41,6 +41,13 @@ UPLOAD_FOLDER = '/home/ubuntu/yolov5/input_data'
 app = Flask(__name__)
 
 
+@app.after_request
+def add_cors_headers(response):
+	response.headers.add('Access-Control-Allow-Origin', '*')
+	response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+	response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+	return response
+
 @app.route('/')
 def start():
 	return 'visit:\nhttp://18.207.249.45/coord\nhttp://18.207.249.45/model\n\noptional:\nhttp://18.207.249.45/upload'
@@ -48,10 +55,10 @@ def start():
 # https://www.cs.cornell.edu/~kozen/Papers/daa.pdf
 
 
-@app.route('/coord', methods=['GET'])
-def get_coord():
-	f = open('/home/ubuntu/yolov5/ranking/top5.txt', "r")
-	return f.read()
+# @app.route('/coord', methods=['GET'])
+# def get_coord():
+# 	f = open('/home/ubuntu/yolov5/ranking/top5.txt', "r")
+# 	return f.read()
 
 
 @app.route('/model', methods=['GET', 'POST'])
@@ -95,9 +102,17 @@ def upload_file():
 			flash('Allowed file types are txt, pdf, png, jpg, jpeg, gif')
 			return redirect(request.url)
 
+@app.route('/test')
+def print_test():
+	return "ok-update"
 
 @app.route('/run')
 def run_model():
+	data = request.json
+	uuid = data["uuid"]
+	pdf_path = data["pdf_path"]
+	image_path = data["image_path"]
+	message = uuid + " " + pdf_path + " " + image_path
 	# import time
 	# os.chdir('/home/ubuntu/yolov5')
 	# sys.path.append('/home/ubuntu/yolov5')
@@ -109,9 +124,9 @@ def run_model():
 	# venv_py = "/home/ubuntu/MathSearch/ml-model/venv/bin/python3"
 	venv_py = "/opt/conda/bin/python3"
 	python_file = "/home/ubuntu/MathSearch/ml-model/yolov5/main.py"
-	subprocess.call([venv_py, python_file])
+	subprocess.call([venv_py, python_file, image_path])
 	end = time.time()
-	return "importing ok\naccessing yolov5/main.py ok" + "\n" + "ML model finished running.\nTime used: " + str(end - start)
+	return message + "\nimporting ok\naccessing yolov5/main.py ok" + "\n" + "ML model finished running.\nTime used: " + str(end - start)
 
 
 if __name__ == "__main__":
