@@ -123,18 +123,23 @@ if __name__ == "__main__":
 	print(main())
 	# print(print_ok())
 
+def get_config_dict():
+    if not hasattr(get_config_dict, 'config_dict'):
+        get_config_dict.config_dict = dict(config.items('AWS Access'))
+    return get_config_dict.config_dict
+
 """ Accessing the S3 buckets using boto3 client """
+config_details = get_config_dict()
 s3_client = boto3.client('s3')
-s3_bucket_name = 'filename_prod'
+s3_bucket_name = 'mathsearch-intermediary'
 s3 = boto3.resource('s3',
-                    aws_access_key_id='YOUR_ACCESS_KEY_ID',
-                    aws_secret_access_key='YOUR_SECRET_ACCESS_KEY')
+                    aws_access_key_id= config_details['ACCES_KEY_ID'] ,
+                    aws_secret_access_key= config_details['SECRET_ACCESS_KEY'])
 
 """ Getting data jpeg from the AWS S3 bucket and store in variable """
 
 def image_from_s3(s3_bucket_name, keyfile_image):
     my_bucket = s3.Bucket(s3_bucket_name)
-    keyfile_image = 'myImage.jpg'
     my_bucket = s3.Bucket(s3_bucket_name)
     image = my_bucket.Object(keyfile_image)
     img_data = image.get().get('Body').read()
