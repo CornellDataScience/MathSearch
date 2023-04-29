@@ -26,7 +26,7 @@ def result():
 	subprocess.call([venv_py, python_file, info])
 	end = time.time()
 	time_str = "PDF saved! Time used: " + str(end - start)
-	return "result page\n"+filename+"\n"+coords+"\n"+time_str
+	return "result page\n"+filename+"\n"+coords+"\n"+time_str+"\n"
 
 @app.route('/api/test')
 def print_test_api():

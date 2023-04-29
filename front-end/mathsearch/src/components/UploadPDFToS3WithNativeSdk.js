@@ -9,10 +9,19 @@ const REGION = process.env.REACT_APP_REGION;
 
 const keyprefix = 'inputs/';
 
+// var tempCreds = new AWS.ChainableTemporaryCredentials({
+//   params: {
+//     RoleArn: 'arn:aws:iam::290365077634:role/ec2_access_s3'
+//   }
+// });
+
+// console.log(tempCreds.getPromise());
+
 AWS.config.update({
   accessKeyId: process.env.REACT_APP_ACCESS_KEY_ID,
   secretAccessKey: process.env.REACT_APP_SECRET_ACCESS_KEY
 })
+
 
 const myBucket = new AWS.S3({
   params: {
@@ -20,6 +29,11 @@ const myBucket = new AWS.S3({
   },
   region: REGION
 })
+
+// myBucket.listObjects({Bucket: S3_BUCKET}, function(err, data) {
+//   if (err) console.log(err, err.stack);
+//   else console.log(data);
+// });
 
 const mySQS = new AWS.SQS({
   params: {
@@ -97,17 +111,42 @@ function UploadPDFToS3WithNativeSdk(){
           image_path: imageKey
         }
 
-        const sqsParams = {
-          MessageBody: JSON.stringify(msg)
-        }
+        const requestOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(msg)
+      };
+        fetch(process.env.REACT_APP_UPLOAD, requestOptions)
+        .then(async response => {
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const data = isJson && await response.json();
 
-        mySQS.sendMessage(sqsParams, function(err, data){
-          if (err) {
-            console.log("Error: ", err)
-          } else {
-            console.log("Success: ", data.MessageId);
-          }
+            // check for error response
+            if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+            }
+
+            console.log('Message sent to backend success!')
+            console.log(response.data.message)
+        })
+        .catch(error => {
+            // this.setState({ errorMessage: error.toString() });
+            console.error('There was an error!', error);
         });
+
+        // const sqsParams = {
+        //   MessageBody: JSON.stringify(msg)
+        // }
+
+        // mySQS.sendMessage(sqsParams, function(err, data){
+        //   if (err) {
+        //     console.log("Error: ", err)
+        //   } else {
+        //     console.log("Success: ", data.MessageId);
+        //   }
+        // });
 
         toReturnPage();
 
