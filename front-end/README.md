@@ -66,7 +66,7 @@ pkill gunicorn
 then
 
 ```
-cd cd ~/MathSearch/front-end/web
+cd ~/MathSearch/front-end/web
 gunicorn -b 127.0.0.1:8000 api:app
 ```
 
@@ -93,12 +93,12 @@ sudo systemctl enable nginx
 ### 3. check if frontend work on local
 
 Option 1:
-visit `127.0.0.1:5000/test`
+visit `127.0.0.1:8000/test`
 
 Option 2:
 
 ```
-curl localhost:5000/test
+curl localhost:8000/test
 ```
 
 Option 3:
