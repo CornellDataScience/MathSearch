@@ -11,11 +11,11 @@ import './Home.css'
 function Home() {
   const navigate = useNavigate()
   const redirect = async () => {
-    const url = "https://catfact.ninja/breeds?limit=1"
+    const url = "http://mathsearch.org/api/result"
     const response = await fetch(url);
     const json = await response.json();
-    console.log("hello")
-    console.log(json)
+    // console.log("hello")
+    // console.log(json)
     navigate('/results',{state:{pdf:pdf, pages:[1, 2, 3]}})
   }
 

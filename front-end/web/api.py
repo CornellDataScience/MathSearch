@@ -25,11 +25,23 @@ def result():
 	venv_py = "/home/ubuntu/MathSearch/front-end/venv/bin/python3"
 	python_file = "/home/ubuntu/MathSearch/front-end/web/render_result.py"
 	info = "-f " + filename + " -c " + coords
-	# subprocess.call([venv_py, python_file, info])
+	coords_lst = coords.split()
+	page_lst = []
+	for i in range(0,len(coords_lst),5):
+		page_lst.append(int(coords_lst[i]))
+	response_body = {
+		"pdf": filename,
+		"pages": page_lst
+	}
+	response = make_response(response_body)
+	response.headers['Content-Type'] = 'application/json'
 	end = time.time()
-	time_str = "PDF saved! Time used: " + str(end - start)
-	return info+"\nresult page\n"+filename+"\n"+coords+"\n"+time_str+"\n"
+	return response
 
+	# time_str = "PDF saved! Time used: " + str(end - start)
+	# return info+"\nresult page\n"+filename+"\n"+time_str+"\n"
+
+# example
 @app.route("/api/responsetest")
 def example_response():
 	response_body = {
@@ -46,11 +58,11 @@ def result_error():
 
 @app.route('/api/test')
 def print_test_api():
-	return "yes the site is up - api/test"
+	return "yesssssss the site is up - api/test\n"
 
 @app.route('/test')
 def print_test():
-	return "yes the site is up - /test"
+	return "yesss! the site is up - /test\n"
 
 # not needed, handled by nginx now
 # @app.route('/')
