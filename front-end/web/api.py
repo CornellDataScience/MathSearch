@@ -29,8 +29,10 @@ def result():
 	page_lst = []
 	for i in range(0,len(coords_lst),5):
 		page_lst.append(int(coords_lst[i]))
+	with open('/pdf_out/'+filename, 'rb') as f:
+		pdf = f.read()
 	response_body = {
-		"pdf": filename,
+		"pdf": pdf,
 		"pages": page_lst
 	}
 	response = make_response(response_body)
@@ -46,7 +48,6 @@ def result():
 def example_response():
 	with open('/pdf_out/ex1.pdf', 'rb') as f:
 		pdf = f.read()
-
 	pages = [1, 2, 56]
 	response_body = {
 		"pdf": pdf,
