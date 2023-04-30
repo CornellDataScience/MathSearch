@@ -32,9 +32,13 @@ def result():
 
 @app.route("/api/responsetest")
 def example_response():
+	with open('/pdf_out/ex1.pdf', 'rb') as f:
+		pdf = f.read()
+
+	pages = [1, 2, 56]
 	response_body = {
-		"pdf": "hello",
-		"pages": [1,2,3]
+		"pdf": pdf,
+		"pages": pages
 	}
 	response = make_response(response_body)
 	response.headers['Content-Type'] = 'application/json'
