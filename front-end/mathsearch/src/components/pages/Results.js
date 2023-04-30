@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
 import "./Results.css";
-import pdf from "./sample.pdf"
+import {useLocation} from 'react-router-dom';
 
 const Results = () => {
+  /**
+    * All state data passed into this window and must include at least
+    * the following:
+    * @param pdf is the pdf to render
+    * @param pages is the list of page numbers
+    */
+  
+  const data = useLocation().state
+
+
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
 
@@ -28,11 +38,15 @@ const Results = () => {
     }
   };
 
-  /** index : value = result item : page number */
-  const pages = [1, 3, 5, 7, 51];
+  // Temporary hardcoding
+  // let pdf_file = data.pdf
+  // let pages = data.pages
+  console.log(data.pdf, data.pages)
 
   return (
     <>
+      {
+        (data.pdf && data.pages) &&
       <div style={{ background: "lightgray" }}>
         <br />
         <div className="grid-container">
@@ -48,7 +62,7 @@ const Results = () => {
               overflow: "scroll",
             }}
           >
-            <Document file={pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
+            <Document file={data.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
               {renderPages().map((item, index) => (
                 <div id={index + 1}>
                   {item}
@@ -71,7 +85,7 @@ const Results = () => {
               <div style={{ textAlign: "center", paddingBottom: "2em" }}>
                 <b>Results</b>
               </div>
-              {pages.map((item, index) => (
+              {data.pages.map((item, index) => (
                 <div>
                   <button className="button" onClick={() => scroll(item)}>
                     Page {item}
@@ -82,6 +96,7 @@ const Results = () => {
           </div>
         </div>
       </div>
+      }
     </>
   );
 };
