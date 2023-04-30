@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 import urllib.request
 import requests
 import subprocess
@@ -29,6 +29,16 @@ def result():
 	end = time.time()
 	time_str = "PDF saved! Time used: " + str(end - start)
 	return info+"\nresult page\n"+filename+"\n"+coords+"\n"+time_str+"\n"
+
+@app.route("/api/responsetest")
+def example_response():
+	response_body = {
+		"pdf": "hello",
+		"pages": [1,2,3]
+	}
+	response = make_response(response_body)
+	response.headers['Content-Type'] = 'application/json'
+	return response
 
 @app.route("/api/error")
 def result_error():
