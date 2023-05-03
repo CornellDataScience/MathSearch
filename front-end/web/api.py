@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, send_file
 import urllib.request
 import requests
 import subprocess
@@ -55,7 +55,8 @@ def example_response():
 	}
 	response = make_response(response_body)
 	response.headers['Content-Type'] = 'application/json'
-	return response
+	# return response
+	return send_file(pdf, mimetype='application/pdf')
 
 @app.route("/api/error")
 def result_error():
