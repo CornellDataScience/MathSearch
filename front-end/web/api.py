@@ -49,12 +49,12 @@ def example_response():
 	with open('pdf_out/ex1.pdf', 'rb') as f:
 		pdf = f.read()
 	pages = [1, 2, 56]
-	response_body = {
-		"pdf": pdf,
-		"pages": pages
-	}
-	response = make_response(response_body)
-	response.headers['Content-Type'] = 'application/json'
+	# response_body = {
+	# 	"pdf": pdf,
+	# 	"pages": pages
+	# }
+	# response = make_response(response_body)
+	# response.headers['Content-Type'] = 'application/json'
 	# return response
 	return send_file(pdf, mimetype='application/pdf')
 
