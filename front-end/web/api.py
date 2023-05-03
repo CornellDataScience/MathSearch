@@ -1,4 +1,5 @@
 from flask import Flask, request, make_response, send_file
+from flask_cors import CORS, cross_origin
 import urllib.request
 import requests
 import subprocess
@@ -11,6 +12,7 @@ Deploy flask. See https://github.com/CornellDataScience/MathSearch/blob/front-en
 """
 
 app = Flask(__name__)
+CORS(app)
 # app = Flask(__name__, static_folder='../mathsearch/build', static_url_path='/')
 
 # file = ex1.pdf
