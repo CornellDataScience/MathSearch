@@ -18,6 +18,9 @@ CORS(app)
 # file = ex1.pdf
 # coords = 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
 # https://54.209.133.135/api/result
+
+# for frontend react to retrieve result from saved frontend EC2
+# waits for backend to finish running model and return result
 @app.route('/api/result')
 def result():
 	start = time.time()
@@ -31,12 +34,14 @@ def result():
 	page_lst = []
 	for i in range(0,len(coords_lst),5):
 		page_lst.append(int(coords_lst[i]))
-	with open('/pdf_out/'+filename, 'rb') as f:
+	with open('/home/ubuntu/MathSearch/front-end/web/pdf_out/'+filename, 'rb') as f:
 		pdf = f.read()
+	# pdf = "temp"
 	response_body = {
 		"pdf": pdf,
 		"pages": page_lst
 	}
+	print(response_body)
 	response = make_response(response_body)
 	response.headers['Content-Type'] = 'application/json'
 	end = time.time()
@@ -71,6 +76,7 @@ def print_test_api():
 
 @app.route('/test')
 def print_test():
+	print("called test")
 	return "yesss! the site is up - /test\n"
 
 # not needed, handled by nginx now
