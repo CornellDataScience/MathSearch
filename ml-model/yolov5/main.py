@@ -5,148 +5,138 @@ import pandas as pd
 import os
 import shutil
 import boto3
-import io
-from io import BytesIO
+import numpy as np
 import cv2
-import sys
-# import ConfigParser
-
-
-# TODO this file is very bad right now. ML model team need to rewrite it.
-# Please try use absolute path
-
-def print_ok():
-	return "importing ok\naccessing yolov5/main.py ok"
-
-def main():
-	"""
-	target_file_name: str of name of file we are looking for.
-	Assumption: input_images/ has been updated with the latest images. 
-	"""
-	print("running yolov5/main.py...")
-
-	# remove_files()
-	# download_files()
-	# assert 1 == 0
-
-	# string of image_path
-	image_path = sys.argv[1]
-	
-	target_file_name = get_source_target_name()
-
-	# Dataset contains output of YOLO model 
-	# Clear folder to reset working directory 
-	dir = "/home/ubuntu/MathSearch/ml-model/yolov5/ranking/dataset/exp"
-	shutil.rmtree(dir)
-	# for f in os.listdir(dir):
-	#    os.remove(os.path.join(dir, f)) 
-
-	# Update target.json with target_file_name 
-	os.remove("ranking/target.json")
-	json_target_dict = {'name': target_file_name} 
-	jsonString = json.dumps(json_target_dict)
-	jsonFile = open("ranking/target.json", "w")
-	jsonFile.write(jsonString)
-	jsonFile.close()
-
-	# Call YOLO model. 
-	# Uses best.torchscript weights 
-	# Input data: input_data/
-	# Writing output to ranking/dataset
-	call("bash run_model.sh", shell=True)
-
-	# Get list of files written to YOLO output, except for target_file_name
-	dir_list = os.listdir(dir + "/crops/equation/")
-	print(dir_list) 
-	dir_list = [x for x in dir_list if x != target_file_name]
-
-	# Construct tbl of generated crops for similarity detection model 
-	img_database = pd.DataFrame(columns = ['image_name', 'image_source', 'coo_1', 'coo_2', 'coo_3', 'coo_4'])
-
-	for f in dir_list:
-		img_source, rem  = f.split("__")
-		eq_number = rem.split(".jpg")[0] 
-		eq_number = 1 if eq_number == '' else eq_number
-		
-		df = pd.read_csv(dir + "labels/" + img_source + ".txt", delim_whitespace=True, header=None) 
-		new_row = {'image_name': f, 'image_source': img_source, 'coo_1':df.iloc[int(eq_number) - 1, 1], 
-				'coo_2':df.iloc[int(eq_number) - 1, 2], 'coo_3': df.iloc[int(eq_number) - 1, 3], 
-				'coo_4': df.iloc[int(eq_number) - 1, 4]} 
-		print(new_row)
-		img_database = img_database.append(new_row, ignore_index = True) 
-
-	img_database.to_csv("ranking/img_database.csv") 
-
-	# Call similarity detection model 
-	# Writes final output to top5.csv
-	call("./ranking/run_image_matching.sh", shell=True) 
-	
-	# df = pd.read_csv("ranking/top5.csv") 
-	# return df.to_json(orient="split")
-
-
-
-# Below methods ML team do not need to worry, I will handle - Emerald
+import time
 
 DATA_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_data"
+INFO_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_info/"
+TARGET_FILE_LOC = "/home/ubuntu/MathSearch/ml-model/yolov5/ranking/target.json"
+aws_access_key_id='AKIAUHGY3PCBKOGUKOJN'
+aws_secret_access_key='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'
+
+def main():
+    """
+    target_file_name: str of name of file we are looking for.
+    Assumption: input_images/ has been updated with the latest images. 
+    """
+    print("running yolov5/main.py...")
+
+    # download input files
+    remove_files()
+    download_files(bucket='mathsearch-intermediary', subfolder='ex01/', img_format='png')
+
+    os.chdir("/home/ubuntu/MathSearch/ml-model/yolov5")
+    target_file_name = get_source_target_name()
+    # print(target_file_name)
+    # assert 1 == 0
+
+    # Dataset contains output of YOLO model 
+    # Clear folder to reset working directory 
+    dataset_path = "ranking/dataset"
+    # target_file = "ranking/target.json"
+    # if(os.path.isdir(dataset_path)):
+    #   shutil.rmtree(dataset_path)
+    
+    # # Update target.json with target_file_name 
+    # if(os.path.exists(target_file)):
+    #   os.remove(target_file)
+    # json_target_dict = {'name': target_file_name} 
+    # jsonString = json.dumps(json_target_dict)
+    # jsonFile = open(target_file, "w")
+    # jsonFile.write(jsonString)
+    # jsonFile.close()
+
+    # Call YOLO model. 
+    # Uses best.torchscript weights 
+    # Input data: input_data/
+    # Writing output to ranking/dataset
+    call("conda activate pytorch", shell=True)
+    call("bash run_model.sh", shell=True)  
+
+    
+
+    # Get list of files written to YOLO output, except for target_file_name
+    # print("1")
+    # time.sleep(7) # TODO
+    # print("dl", os.path.join(dataset_path, "exp","crops", "equation"))
+
+    dir_list = os.listdir(os.path.join(dataset_path,"exp" ,"crops", "equation"))
+    
+    dir_list = [x for x in dir_list if x != target_file_name]
+
+    # Construct tbl of generated crops for similarity detection model 
+    img_database = pd.DataFrame(columns = ['image_name', 'image_source', 'coo_1', 'coo_2', 'coo_3', 'coo_4'])
+
+    for f in dir_list:
+      img_source, rem  = f.split("__")
+      # eq_number = rem.split(".png")[0] 
+      # eq_number = 1 if eq_number == '' else eq_number
+      
+      # df = pd.read_csv(os.path.join(dataset_path,"exp" ,"labels/") + img_source + ".txt", delim_whitespace=True, header=None) 
+      # new_row = {'image_name': f, 'image_source': img_source, 'coo_1':df.iloc[int(eq_number) - 1, 1], 
+      #     'coo_2':df.iloc[int(eq_number) - 1, 2], 'coo_3': df.iloc[int(eq_number) - 1, 3], 
+      #     'coo_4': df.iloc[int(eq_number) - 1, 4]} 
+      # print(img_source)
+      # print(eq_number)
+      # print(img_source)
+      df = pd.read_csv(os.path.join(dataset_path,"exp" ,"labels/") + img_source + ".txt", delim_whitespace=True, header=None)
+      new_row = {'image_name': f, 'image_source': img_source, 'coo_1':df.iloc[0, 1], 
+          'coo_2':df.iloc[0, 2], 'coo_3': df.iloc[0, 3], 
+          'coo_4': df.iloc[0, 4]} 
+      img_database = img_database.append(new_row, ignore_index = True) 
+
+    img_database.to_csv("ranking/img_database.csv") 
+
+    # Call similarity detection model 
+    # Writes final output to top5.csv
+    call("./ranking/run_image_matching.sh", shell=True) 
+
 
 def remove_files():
-	global DATA_FOLDER
-	for f in os.listdir(DATA_FOLDER):
-		os.remove(os.path.join(DATA_FOLDER, f))
+    global DATA_FOLDER
+    for f in os.listdir(DATA_FOLDER):
+      os.remove(os.path.join(DATA_FOLDER, f))
 
 def save_file(s3_bucket,s3_object):
-	global DATA_FOLDER
-	file_name = s3_object.split('/')[-1]
-	boto3.client('s3').download_file(s3_bucket, s3_object, f'{DATA_FOLDER}/{file_name}')
-	# TODO: accessing file not working, need to specify dir
+    global DATA_FOLDER
+    file_name = s3_object.split('/')[-1]
+    boto3.client('s3').download_file(s3_bucket, s3_object, f'{DATA_FOLDER}/{file_name}')
 
-INFO_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_info/"
+def download_files(bucket, subfolder, img_format):
+    global INFO_FOLDER
+    global DATA_FOLDER
+    global aws_access_key_id
+    global aws_secret_access_key
+
+    prefix = subfolder
+    mybucket = bucket
+
+    f = open(INFO_FOLDER+"names.txt") # Open file on read mode
+    lines = f.read().splitlines() # List with stripped line-breaks
+    f.close() 
+
+    mybucket = lines[0]
+    prefix = lines[1]
+
+    # TODO read from config file
+    s3 = boto3.client(service_name='s3', region_name='us-east-1', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+
+    for obj in s3.list_objects(Bucket=mybucket, Prefix=prefix).get('Contents'):
+      k = obj.get('Key')
+      if k[-3:] != img_format:
+        continue
+      file_name = obj.get('Key').split('/')[-1]
+      s3.download_file(Bucket=mybucket,Key=k, Filename=f'{DATA_FOLDER}/{file_name}')
 
 def get_source_target_name():
-	global INFO_FOLDER
-	f = open(INFO_FOLDER+"names.txt")
+	# global INFO_FOLDER
+	f = open(TARGET_FILE_LOC)
 	lines = f.read().splitlines()
 	f.close()
-	s3_object_pdf = lines[1]
-	file_name = s3_object_pdf.split('/')[-1]+"_image"
-	return file_name
-
-def download_files():
-	global DATA_FOLDER
-	f = open(INFO_FOLDER+"names.txt") # Open file on read mode
-	lines = f.read().splitlines() # List with stripped line-breaks
-	f.close() # Close file
-	print(lines)
-	s3_bucket = lines[0]
-	s3_object = lines[1]
-	save_file(s3_bucket,s3_object+"_pdf")
-	save_file(s3_bucket,s3_object+"_image")
+	target = lines[1]
+	# file_name = s3_object_pdf.split('/')[-1]+"_image"
+	return target
 
 if __name__ == "__main__":
-	# print(main("target_search.png")) # <- Why is there an arg? TypeError: main() takes 0 positional arguments but 1 was given - Emerald
-	image_path = sys.argv[1]
-	print(image_path)
-	print(main())
-	# print(print_ok())
-
-""" Accessing the S3 buckets using boto3 client """
-config = ConfigParser.ConfigParser()
-config.readfp(open(r'config.py'))
-config_details = get_config_dict()
-s3_client = boto3.client('s3')
-s3_bucket_name = 'mathsearch-intermediary'
-s3 = boto3.resource('s3',
-                    aws_access_key_id= config.get('AWS Access', 'ACCESS_KEY_ID') ,
-                    aws_secret_access_key= config.get('AWS Access','SECRET_ACCESS_KEY'))
-
-""" Getting data jpeg from the AWS S3 bucket and store in variable """
-
-def image_from_s3(s3_bucket_name, keyfile_image):
-    my_bucket = s3.Bucket(s3_bucket_name)
-    my_bucket = s3.Bucket(s3_bucket_name)
-    image = my_bucket.Object(keyfile_image)
-    img_data = image.get().get('Body').read()
-    return cv2.imread(io.BytesIO(img_data))
-
-#push check
+  main()
