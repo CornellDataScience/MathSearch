@@ -97,6 +97,15 @@ def main(pdf_image_prefix,local_target):
     call("./ranking/run_image_matching.sh", shell=True) 
 
 
+# Json example
+# {
+#  "file":"ex1.pdf",
+#  "coords":"0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889"
+# }
+def send_result_to_frontend(pdf_name):
+    pass
+    
+
 def remove_files():
     global DATA_FOLDER
     for f in os.listdir(DATA_FOLDER):
@@ -117,8 +126,9 @@ def download_files(pdf_name, target_name):
     )
     images = pdf2image.convert_from_path(local_pdf)
     print(local_pdf)
+    os.mkdir(DATA_FOLDER + pdf_name)
     for i in range(len(images)):
-        pdf_image = DATA_FOLDER + pdf_name + str(i) + ".png"
+        pdf_image = DATA_FOLDER + pdf_name + "/"+ str(i) + ".png"
         print(pdf_image)
         images[i].save(pdf_image)
     
@@ -144,6 +154,7 @@ if __name__ == "__main__":
     print(pdf_image_prefix,local_target)
 
     main(pdf_image_prefix,local_target)
+    send_result_to_frontend(pdf_name)
 
 
 # def save_file(s3_bucket,s3_object):
