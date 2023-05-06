@@ -4,6 +4,7 @@ import urllib.request
 import requests
 import subprocess
 import time
+import boto3
 
 """
 Deploy flask. See https://github.com/CornellDataScience/MathSearch/blob/front-end/front-end/README.md
@@ -15,15 +16,13 @@ app = Flask(__name__)
 CORS(app)
 # app = Flask(__name__, static_folder='../mathsearch/build', static_url_path='/')
 
-# file = ex1.pdf
-# coords = 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
-# https://54.209.133.135/api/result
+# curl -i -X GET -H "Content-Type: application/json" -d "{\"file\":\"012330fd-7c87-4236-8f4c-b39f3ea72968_pdf\",\"coords\":\"0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889\"}" http://localhost:8001/api/result
 
 # for frontend react to retrieve result from saved frontend EC2
 # waits for backend to finish running model and return result
 @app.route('/api/result')
 def result():
-	start = time.time()
+	# start = time.time()
 	data = request.json
 	filename = data["file"]
 	coords = data["coords"]
@@ -32,21 +31,34 @@ def result():
 	info = "-f " + filename + " -c " + coords
 	coords_lst = coords.split()
 	page_lst = []
+
+	MATHSEARCH_BUCKET='mathsearch-intermediary'
+	local_pdf = "/home/ubuntu/MathSearch/front-end/web/pdf_in/" + filename
+	s3 = boto3.client("s3")
+	s3.download_file(
+        Bucket=MATHSEARCH_BUCKET, Key="inputs/"+filename, Filename=local_pdf
+    )
+	subprocess.call([venv_py, python_file, info])
 	for i in range(0,len(coords_lst),5):
 		page_lst.append(int(coords_lst[i]))
-	with open('/home/ubuntu/MathSearch/front-end/web/pdf_out/'+filename, 'rb') as f:
-		pdf = f.read()
-	# pdf = "temp"
-	response_body = {
-		"pdf": pdf,
-		"pages": page_lst
-	}
-	print(response_body)
-	response = make_response(response_body)
-	response.headers['Content-Type'] = 'application/json'
-	end = time.time()
-	return response
+	# json = {
+	# 	"pdf":filename,
+	# 	"pages":page_lst
+	# }
+	# end = time.time()
+	return "done"
 
+	#? broken code
+	# with open('/home/ubuntu/MathSearch/front-end/web/pdf_out/'+filename, 'rb') as f:
+	# 	pdf = f.read()
+	# # pdf = "temp"
+	# response_body = {
+	# 	"pdf": pdf,
+	# 	"pages": page_lst
+	# }
+	# print(response_body)
+	# response = make_response(response_body)
+	# response.headers['Content-Type'] = 'application/json'
 	# time_str = "PDF saved! Time used: " + str(end - start)
 	# return info+"\nresult page\n"+filename+"\n"+time_str+"\n"
 
@@ -77,7 +89,7 @@ def print_test_api():
 @app.route('/test')
 def print_test():
 	print("called test")
-	return "yesss! the site is up - /test\n"
+	return "yesss! the site is up - update - debug - /test\n"
 
 # not needed, handled by nginx now
 # @app.route('/')

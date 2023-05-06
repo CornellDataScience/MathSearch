@@ -112,7 +112,7 @@ def main(argv):
 	with open("/home/ubuntu/MathSearch/front-end/web/result_log","a") as file:
 		argv_str = " ".join(str(x) for x in argv)
 		print(argv_str)
-		file.write(time.strftime("%H:%M:%S", time.localtime()) + "\t" + argv_str)
+		file.write("\n",time.strftime("%H:%M:%S", time.localtime()) + "\t" + argv_str)
 
 
 # python3 render_result.py -f ex1.pdf -c 0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889
