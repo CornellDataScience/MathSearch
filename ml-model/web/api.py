@@ -45,7 +45,7 @@ app = Flask(__name__)
 def add_cors_headers(response):
 	response.headers.add('Access-Control-Allow-Origin', '*')
 	response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-	response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+	# response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
 	return response
 
 @app.route('/')
@@ -106,8 +106,9 @@ def upload_file():
 def print_test():
 	return "ok-update"
 
-@app.route('/run')
+@app.route('/run', methods=['POST'])
 def run_model():
+	print("/run called")
 	data = request.json
 	uuid = data["uuid"]
 	pdf_path = data["pdf_path"]
@@ -124,7 +125,7 @@ def run_model():
 	# venv_py = "/home/ubuntu/MathSearch/ml-model/venv/bin/python3"
 	venv_py = "/opt/conda/bin/python3"
 	python_file = "/home/ubuntu/MathSearch/ml-model/yolov5/main.py"
-	subprocess.call([venv_py, python_file, image_path])
+	subprocess.call([venv_py, python_file, pdf_path, image_path])
 	end = time.time()
 	return message + "\nimporting ok\naccessing yolov5/main.py ok" + "\n" + "ML model finished running.\nTime used: " + str(end - start)
 

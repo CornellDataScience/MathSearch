@@ -8,26 +8,32 @@ import boto3
 import numpy as np
 import cv2
 import time
+import sys
+import PyPDF2
+import pdf2image
+from PIL import Image
 
-DATA_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_data"
-INFO_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_info/"
-TARGET_FILE_LOC = "/home/ubuntu/MathSearch/ml-model/yolov5/ranking/target.json"
-aws_access_key_id='AKIAUHGY3PCBKOGUKOJN'
-aws_secret_access_key='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'
+PREPROCESS_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/preprocess_data/"
+DATA_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_data/"
 
-def main():
+"""
+pdf files location hard coded to DATA_FOLDER
+Args: pdf_filename, target_filename
+"""
+
+# bad code below? we use args instead of saving to files and read to file. ignoring -emerald
+# INFO_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_info/"
+# TARGET_FILE_LOC = "/home/ubuntu/MathSearch/ml-model/yolov5/ranking/target.json"
+
+def main(pdf_image_prefix,local_target):
     """
     target_file_name: str of name of file we are looking for.
     Assumption: input_images/ has been updated with the latest images. 
     """
     print("running yolov5/main.py...")
 
-    # download input files
-    remove_files()
-    download_files(bucket='mathsearch-intermediary', subfolder='ex01/', img_format='png')
-
     os.chdir("/home/ubuntu/MathSearch/ml-model/yolov5")
-    target_file_name = get_source_target_name()
+    target_file_name = local_target
     # print(target_file_name)
     # assert 1 == 0
 
@@ -35,8 +41,8 @@ def main():
     # Clear folder to reset working directory 
     dataset_path = "ranking/dataset"
     # target_file = "ranking/target.json"
-    # if(os.path.isdir(dataset_path)):
-    #   shutil.rmtree(dataset_path)
+    if(os.path.isdir(dataset_path)):
+      shutil.rmtree(dataset_path)
     
     # # Update target.json with target_file_name 
     # if(os.path.exists(target_file)):
@@ -54,11 +60,9 @@ def main():
     call("conda activate pytorch", shell=True)
     call("bash run_model.sh", shell=True)  
 
-    
 
     # Get list of files written to YOLO output, except for target_file_name
-    # print("1")
-    # time.sleep(7) # TODO
+    time.sleep(5) # TODO
     # print("dl", os.path.join(dataset_path, "exp","crops", "equation"))
 
     dir_list = os.listdir(os.path.join(dataset_path,"exp" ,"crops", "equation"))
@@ -98,45 +102,82 @@ def remove_files():
     for f in os.listdir(DATA_FOLDER):
       os.remove(os.path.join(DATA_FOLDER, f))
 
-def save_file(s3_bucket,s3_object):
+def download_files(pdf_name, target_name):
     global DATA_FOLDER
-    file_name = s3_object.split('/')[-1]
-    boto3.client('s3').download_file(s3_bucket, s3_object, f'{DATA_FOLDER}/{file_name}')
+    global PREPROCESS_FOLDER
+    s3 = boto3.client("s3")
+    MATHSEARCH_BUCKET='mathsearch-intermediary'
+    local_pdf = PREPROCESS_FOLDER + pdf_name
+    local_target = DATA_FOLDER + target_name[:-5] + "target.png"
+    print(local_pdf)
 
-def download_files(bucket, subfolder, img_format):
-    global INFO_FOLDER
-    global DATA_FOLDER
-    global aws_access_key_id
-    global aws_secret_access_key
+    # download and preprocess pdf to png
+    s3.download_file(
+        Bucket=MATHSEARCH_BUCKET, Key="inputs/"+pdf_name, Filename=local_pdf
+    )
+    images = pdf2image.convert_from_path(local_pdf)
+    print(local_pdf)
+    for i in range(len(images)):
+        pdf_image = DATA_FOLDER + pdf_name + str(i) + ".png"
+        print(pdf_image)
+        images[i].save(pdf_image)
+    
+    # download target png
+    s3.download_file(
+        Bucket=MATHSEARCH_BUCKET, Key="inputs/"+target_name, Filename=local_target
+    )
 
-    prefix = subfolder
-    mybucket = bucket
-
-    f = open(INFO_FOLDER+"names.txt") # Open file on read mode
-    lines = f.read().splitlines() # List with stripped line-breaks
-    f.close() 
-
-    mybucket = lines[0]
-    prefix = lines[1]
-
-    # TODO read from config file
-    s3 = boto3.client(service_name='s3', region_name='us-east-1', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
-
-    for obj in s3.list_objects(Bucket=mybucket, Prefix=prefix).get('Contents'):
-      k = obj.get('Key')
-      if k[-3:] != img_format:
-        continue
-      file_name = obj.get('Key').split('/')[-1]
-      s3.download_file(Bucket=mybucket,Key=k, Filename=f'{DATA_FOLDER}/{file_name}')
-
-def get_source_target_name():
-	# global INFO_FOLDER
-	f = open(TARGET_FILE_LOC)
-	lines = f.read().splitlines()
-	f.close()
-	target = lines[1]
-	# file_name = s3_object_pdf.split('/')[-1]+"_image"
-	return target
 
 if __name__ == "__main__":
-  main()
+    pdf_name = sys.argv[1]
+    target_name = sys.argv[2]
+    print(pdf_name,target_name)
+    remove_files()
+    download_files(pdf_name,target_name)
+
+    # prefix example:
+    # /home/ubuntu/MathSearch/ml-model/yolov5/input_data/012330fd-7c87-4236-8f4c-b39f3ea72968_pdf
+    # actual path:
+    # /home/ubuntu/MathSearch/ml-model/yolov5/input_data/012330fd-7c87-4236-8f4c-b39f3ea72968_pdf0.png
+    pdf_image_prefix = DATA_FOLDER + pdf_name
+    local_target = DATA_FOLDER + target_name[:-5] + "target.png"
+    print(pdf_image_prefix,local_target)
+
+    main(pdf_image_prefix,local_target)
+
+
+# def save_file(s3_bucket,s3_object):
+#     global DATA_FOLDER
+#     file_name = s3_object.split('/')[-1]
+#     boto3.client('s3').download_file(s3_bucket, s3_object, f'{DATA_FOLDER}/{file_name}')
+
+
+#! deprecated download because don't use access key
+# def download_files(bucket, subfolder, img_format):
+#     global INFO_FOLDER
+#     global DATA_FOLDER
+#     global aws_access_key_id
+#     global aws_secret_access_key
+#     prefix = subfolder
+#     mybucket = bucket
+#     f = open(INFO_FOLDER+"names.txt") # Open file on read mode
+#     lines = f.read().splitlines() # List with stripped line-breaks
+#     f.close() 
+#     mybucket = lines[0]
+#     prefix = lines[1]
+#     # TODO read from config file
+#     s3 = boto3.client(service_name='s3', region_name='us-east-1', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
+#     for obj in s3.list_objects(Bucket=mybucket, Prefix=prefix).get('Contents'):
+#       k = obj.get('Key')
+#       if k[-3:] != img_format:
+#         continue
+#       file_name = obj.get('Key').split('/')[-1]
+#       s3.download_file(Bucket=mybucket,Key=k, Filename=f'{DATA_FOLDER}/{file_name}')
+
+# def get_source_target_name():
+# 	f = open(TARGET_FILE_LOC)
+# 	lines = f.read().splitlines()
+# 	f.close()
+# 	target = lines[1]
+# 	# file_name = s3_object_pdf.split('/')[-1]+"_image"
+# 	return target
