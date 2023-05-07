@@ -80,6 +80,7 @@ def send_result_to_frontend(pdf_name):
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             # adding page number and coords for each re-rank
+            # # result_coords += str(int(row[0])+1) + " "
             result_coords += row[0] + " "
             result_coords += row[3] + " "
             result_coords += row[4] + " "
@@ -111,7 +112,8 @@ def download_files(pdf_name, target_name):
     MATHSEARCH_BUCKET='mathsearch-intermediary'
     local_pdf = PREPROCESS_FOLDER + pdf_name
     local_target = DATA_FOLDER + target_name[:-5] + "target.png"
-    print(local_pdf)
+    print("local_pdf",local_pdf)
+    print("pdf_name",pdf_name)
 
     # download and preprocess pdf to png
     s3.download_file(
@@ -131,10 +133,15 @@ def download_files(pdf_name, target_name):
     )
 
 if __name__ == "__main__":
+
     pdf_name = sys.argv[1]
     target_name = sys.argv[2]
 
+    print(pdf_name)
+    print(target_name)
+
     remove_files()
+    time.sleep(10)
     download_files(pdf_name,target_name)
 
     # prefix example:
@@ -145,4 +152,5 @@ if __name__ == "__main__":
     local_target = DATA_FOLDER + target_name[:-5] + "target.png"
 
     main(pdf_image_prefix,local_target)
+    print("finished running yolo! sending results to frontend...")
     send_result_to_frontend(pdf_name)

@@ -99,6 +99,8 @@ if __name__ == "__main__":
   top5_index = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i])[-5:]
   top5_index.reverse()
 
+  print("Similarity scores", similarity_scores)
+  
   for idx in top5_index:
     top5 = top5.append(db.iloc[idx])
   
