@@ -1,4 +1,5 @@
 from flask import Flask, request, make_response, send_file
+import json
 from flask_cors import CORS, cross_origin
 import urllib.request
 import requests
@@ -69,9 +70,13 @@ def result():
 	# return info+"\nresult page\n"+filename+"\n"+time_str+"\n"
 
 # example
-@app.route("/api/responsetest")
+@app.route("/api/response_pdf")
 def example_response():
-	pdf_file = 'pdf_out/ex1.pdf'
+	f = open ('info/info.json', "r")
+	data = json.loads(f.read())
+	pdf_file = data['pdf']
+	return send_file(pdf_file, mimetype='application/pdf')
+	# pdf_file = 'pdf_out/ex1.pdf'
 	# with open('pdf_out/ex1.pdf', 'rb') as f:
 	# 	pdf = f.read()
 	pages = [1, 2, 56]
@@ -82,10 +87,17 @@ def example_response():
 	# response = make_response(response_body)
 	# response.headers['Content-Type'] = 'application/json'
 	# return response
-	response = make_response(send_file(pdf_file))
-	response.headers['pages'] = pages
-	return response
-	# return send_file(pdf_file, mimetype='application/pdf', headers={'Int-Array': pages})
+	# response = make_response(send_file(pdf_file))
+	# response.headers['pages'] = pages
+	# return response
+	return send_file(pdf_file, mimetype='application/pdf')
+
+@app.route("/api/response_pages")
+def response_pages():
+	f = open ('info/info.json', "r")
+	data = json.loads(f.read())
+	pages = data['pages']
+	return pages
 
 @app.route("/api/error")
 def result_error():

@@ -13,13 +13,16 @@ function Home() {
   const redirect = async () => {
     // Test code
     // try {
-    const url = "http://mathsearch.org/api/responsetest";
+    const url = "http://mathsearch.org/api/response_pdf";
     const response = await fetch(url);
     const pdfBinary = await response.blob()
-    const pages = await response.headers.pages
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${url}`;
-    document.body.appendChild(iframe);
+
+    const url2 = "http://mathsearch.org/api/response_pages"
+    const response2 = await fetch(url2);
+    const pages = await response2.body()
+    // const iframe = document.createElement('iframe');
+    // iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${url}`;
+    // document.body.appendChild(iframe);
     // } catch (err) {
     //   console.log(err)
     // }
