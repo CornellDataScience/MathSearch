@@ -76,7 +76,7 @@ def example_response():
 	# response = make_response(response_body)
 	# response.headers['Content-Type'] = 'application/json'
 	# return response
-	return [send_file(pdf_file, mimetype='application/pdf'), [1,2,3]]
+	return send_file(pdf_file, mimetype='application/pdf', headers={'Int-Array': pages})
 
 @app.route("/api/error")
 def result_error():
