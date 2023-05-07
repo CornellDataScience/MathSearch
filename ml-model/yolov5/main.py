@@ -1,5 +1,5 @@
 import subprocess
-from subprocess import call
+from subprocess import call, run
 import json 
 import pandas as pd
 import os
@@ -12,6 +12,8 @@ import sys
 import PyPDF2
 import pdf2image
 from PIL import Image
+import csv
+import requests
 
 PREPROCESS_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/preprocess_data/"
 DATA_FOLDER = "/home/ubuntu/MathSearch/ml-model/yolov5/input_data/"
@@ -57,12 +59,15 @@ def main(pdf_image_prefix,local_target):
     # Uses best.torchscript weights 
     # Input data: input_data/
     # Writing output to ranking/dataset
-    call("conda activate pytorch", shell=True)
-    call("bash run_model.sh", shell=True)  
 
+    # call("conda activate pytorch", shell=True)
+    # call("bash run_model.sh", shell=True)  
+    run('conda run -n pytorch python detect.py --weights best.torchscript --source input_data/{} --save-txt --save-crop --project ranking/dataset/'.format(sys.argv[1]), shell=True)
+
+    
 
     # Get list of files written to YOLO output, except for target_file_name
-    time.sleep(5) # TODO
+    # time.sleep(5) # TODO
     # print("dl", os.path.join(dataset_path, "exp","crops", "equation"))
 
     dir_list = os.listdir(os.path.join(dataset_path,"exp" ,"crops", "equation"))
@@ -94,7 +99,7 @@ def main(pdf_image_prefix,local_target):
 
     # Call similarity detection model 
     # Writes final output to top5.csv
-    call("./ranking/run_image_matching.sh", shell=True) 
+    run('conda run -n pytorch python ./ranking/ImageMatching.py',shell=True )
 
 
 # Json example
@@ -103,13 +108,36 @@ def main(pdf_image_prefix,local_target):
 #  "coords":"0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889"
 # }
 def send_result_to_frontend(pdf_name):
-    pass
-    
+    result_coords = ""
+    result_csv = "/home/ubuntu/MathSearch/ml-model/yolov5/ranking/top5.csv"
+    with open(result_csv, 'r') as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            # adding page number and coords for each re-rank
+            result_coords += row[0] + " "
+            result_coords += row[3] + " "
+            result_coords += row[4] + " "
+            result_coords += row[5] + " "
+            result_coords += row[6] + " "
+    frontend_url = "http://3.94.25.91/api/result"
+    json = {
+        "file":pdf_name,
+        "coords":result_coords
+    }
+    print(pdf_name)
+    print(result_coords)
+    res = requests.get(frontend_url, json=json)
+    res = print(res) # OK = 200
+
 
 def remove_files():
     global DATA_FOLDER
+    # shutil.rmtree(DATA_FOLDER)
     for f in os.listdir(DATA_FOLDER):
-      os.remove(os.path.join(DATA_FOLDER, f))
+        try:
+            os.remove(os.path.join(DATA_FOLDER, f))
+        except:
+            shutil.rmtree(os.path.join(DATA_FOLDER, f)) 
 
 def download_files(pdf_name, target_name):
     global DATA_FOLDER
@@ -136,12 +164,11 @@ def download_files(pdf_name, target_name):
     s3.download_file(
         Bucket=MATHSEARCH_BUCKET, Key="inputs/"+target_name, Filename=local_target
     )
-
+    # os.rename(local_target, DATA_FOLDER + pdf_name+'/'+target_name[:-5] + "target.png")
 
 if __name__ == "__main__":
     pdf_name = sys.argv[1]
     target_name = sys.argv[2]
-    print(pdf_name,target_name)
     remove_files()
     download_files(pdf_name,target_name)
 
@@ -151,7 +178,7 @@ if __name__ == "__main__":
     # /home/ubuntu/MathSearch/ml-model/yolov5/input_data/012330fd-7c87-4236-8f4c-b39f3ea72968_pdf0.png
     pdf_image_prefix = DATA_FOLDER + pdf_name
     local_target = DATA_FOLDER + target_name[:-5] + "target.png"
-    print(pdf_image_prefix,local_target)
+    # print(pdf_image_prefix,local_target)
 
     main(pdf_image_prefix,local_target)
     send_result_to_frontend(pdf_name)
