@@ -50,7 +50,7 @@ def result():
 	# OLD
 	# return "done"
 
-	response = make_response(send_file(f'pdf_out/{filename}'))
+	response = make_response(send_file(f'pdf_out/ex1.pdf'))
 	response.headers['pages'] = page_lst
 	return response
 
