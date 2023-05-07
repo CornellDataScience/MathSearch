@@ -46,7 +46,13 @@ def result():
 	# 	"pages":page_lst
 	# }
 	# end = time.time()
-	return "done"
+
+	# OLD
+	# return "done"
+
+	response = make_response(send_file(f'pdf_out/{filename}'))
+	response.headers['pages'] = page_lst
+	return response
 
 	#? broken code
 	# with open('/home/ubuntu/MathSearch/front-end/web/pdf_out/'+filename, 'rb') as f:
@@ -76,7 +82,7 @@ def example_response():
 	# response = make_response(response_body)
 	# response.headers['Content-Type'] = 'application/json'
 	# return response
-	response = make_response(send_file(pdf_file, mime_type="application/pdf"))
+	response = make_response(send_file(pdf_file))
 	response.headers['pages'] = pages
 	return response
 	# return send_file(pdf_file, mimetype='application/pdf', headers={'Int-Array': pages})
