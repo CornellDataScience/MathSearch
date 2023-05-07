@@ -6,6 +6,7 @@ import requests
 import subprocess
 import time
 import boto3
+import json
 
 """
 Deploy flask. See https://github.com/CornellDataScience/MathSearch/blob/front-end/front-end/README.md
@@ -20,7 +21,7 @@ CORS(app)
 # curl -i -X GET -H "Content-Type: application/json" -d "{\"file\":\"012330fd-7c87-4236-8f4c-b39f3ea72968_pdf\",\"coords\":\"0 0.3392857142857143 0.17142857142857146 0.30952380952380953 0.12698412698412698 1 0.32242063492063494 0.4380952380952381 0.26785714285714285 0.08888888888888889\"}" http://localhost:8001/api/result
 
 # for frontend react to retrieve result from saved frontend EC2
-# waits for backend to finish running model and return result
+# waits for backend to finish running model
 @app.route('/api/result')
 def result():
 	# start = time.time()
@@ -48,7 +49,14 @@ def result():
 	# }
 	# end = time.time()
 
-	# OLD
+	info = {
+		"pdf": "/home/ubuntu/MathSearch/front-end/web/pdf_out/"+filename,
+		"pages": page_lst
+	}
+	INFO_PATH = "/home/ubuntu/MathSearch/front-end/web/info/info.json"
+	with open(INFO_PATH,"w") as json_file:
+		json.dump(info, json_file, indent=4, separators=(",",":"))
+
 	return "done"
 
 	# response = make_response(send_file(f'pdf_out/ex1.pdf'))

@@ -2,14 +2,21 @@
 
 located ./mathsearch README.md
 
+
+## Commands 101
+
+1. update react: `npm run build` and `sudo systemctl restart nginx`
+2. update flask: `pkill gunicorn`
+
+
 # Frontend Public IP
 
 ### As time: 5/29 3:12PM
 
-Everytime EC2 instance gets restarted, new IP and new SSH ip is be generated and need to be updated for config and domain redirection.
+We seted up elastic public IP address for our EC2 instances, so its IP address will never change.
 
-- Public IP: `http://54.209.133.135`
-- SSH: `ec2-54-209-133-135.compute-1.amazonaws.com`
+- Elastic Public IP: `http://3.94.25.91`
+- SSH: `ec2-3-94-25-91.compute-1.amazonaws.com`
 
 # Architecture
 
@@ -35,7 +42,7 @@ put your venv in `/home/ubuntu/MathSearch/front-end` and cd into it
 source venv/bin/activate
 ```
 
-# Commands You Need
+# More Commands You Need
 
 ## When Update React
 
@@ -137,15 +144,18 @@ There's no references anymore. Too many sites had been used during debug. Just s
 2. `/lib/systemd/system/nginx.service`
 3. (unused) `/etc/nginx/sites-available/MathSearch`
 
-
 ## Access S3
+
 To test connection, run below (notice the "-" on the second option). It should display directory in s3 buckets or cat the file.
 
 option 1
+
 ```
 aws s3 ls s3://mathsearch-intermediary
 ```
+
 option 2
+
 ```
 aws s3 cp s3://mathsearch-intermediary/test.txt -
 ```
