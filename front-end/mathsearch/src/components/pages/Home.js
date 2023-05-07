@@ -19,7 +19,8 @@ function Home() {
 
     const url2 = "http://mathsearch.org/api/response_pages"
     const response2 = await fetch(url2);
-    const pages = await response2.body()
+    const pages = await response2.json()
+    // console.log(pages)
     // const iframe = document.createElement('iframe');
     // iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${url}`;
     // document.body.appendChild(iframe);
