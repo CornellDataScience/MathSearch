@@ -77,8 +77,8 @@ def example_response():
 	# response.headers['Content-Type'] = 'application/json'
 	# return response
 	return {
-		# "pdf": send_file(pdf_file, mimetype='application/pdf'),
-		"pdf": "test",
+		"pdf": send_file(pdf_file, mimetype='application/pdf'),
+		# "pdf": "test",
 		"pages": [1,2,3]
 	}
 
