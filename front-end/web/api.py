@@ -48,11 +48,11 @@ def result():
 	# end = time.time()
 
 	# OLD
-	# return "done"
+	return "done"
 
-	response = make_response(send_file(f'pdf_out/ex1.pdf'))
-	response.headers['pages'] = page_lst
-	return response
+	# response = make_response(send_file(f'pdf_out/ex1.pdf'))
+	# response.headers['pages'] = page_lst
+	# return response
 
 	#? broken code
 	# with open('/home/ubuntu/MathSearch/front-end/web/pdf_out/'+filename, 'rb') as f:
