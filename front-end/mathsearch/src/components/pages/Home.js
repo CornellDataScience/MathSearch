@@ -16,6 +16,7 @@ function Home() {
     const url = "http://mathsearch.org/api/responsetest";
     const response = await fetch(url);
     const pdfBinary = await response.blob()
+    const pages = await response.headers.pages
     const iframe = document.createElement('iframe');
     iframe.src = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${url}`;
     document.body.appendChild(iframe);
@@ -29,7 +30,7 @@ function Home() {
     // const json = await response.json();
     // console.log("hello")
     // console.log(json)
-    navigate('/results',{state:{pdf:pdfBinary, pages:[1, 2, 3]}})
+    navigate('/results',{state:{pdf:pdfBinary, pages:pages}})
   }
 
   const test_api = async () => {
