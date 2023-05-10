@@ -6,7 +6,7 @@ located ./mathsearch README.md
 ## Commands 101
 
 1. update react: `npm run build` and `sudo systemctl restart nginx`
-2. update flask: `pkill gunicorn`
+2. update flask: `pkill gunicorn`, or `tmux` and restart gunicorn on the correct port (dangerous, read details below before you do it)
 
 
 # Frontend Public IP
@@ -74,11 +74,13 @@ then
 
 ```
 cd ~/MathSearch/front-end/web
+tmux
 gunicorn -b 127.0.0.1:8000 api:app
 ```
 
 You must be in `/web` to let gunicorn start app  
 -b stands for bind which specify the IP address  
+please run it within tmux so we can always open the terminal again to see gunicorn debug log. 
 above command start gunicorn which run flask, do NOT end this process
 
 # Other Things - You probably do not need to know
@@ -108,10 +110,10 @@ Option 2:
 curl localhost:8000/test
 ```
 
-Option 3:
-
+Option 3:  
+use any unused port
 ```
-gunicorn -b 127.0.0.1:8000 api:app
+gunicorn -b 127.0.0.1:8001 api:app
 ```
 
 if get [ERROR] Connection in use: ('127.0.0.1', 8000), you need to stop public deployment to deploy to local, do a pid kill
@@ -141,7 +143,7 @@ There's no references anymore. Too many sites had been used during debug. Just s
 ### 8. location of important files:
 
 1. `/etc/nginx/nginx.conf`
-2. `/lib/systemd/system/nginx.service`
+2. (unused) `/lib/systemd/system/nginx.service`
 3. (unused) `/etc/nginx/sites-available/MathSearch`
 
 ## Access S3
