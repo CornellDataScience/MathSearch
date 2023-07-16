@@ -48,6 +48,8 @@ To segment an image, run
 `python segment/predict.py --weights {weights} --data  {img}`
 
 # SWE
+<img width="700" alt="full pipeline" src="https://github.com/CornellDataScience/MathSearch/assets/44758321/bcb8dff2-0e21-474f-9f19-915cda76262c">
+
 
 ## Frontend Public IP
 ### As time: 5/29 3:12PM
