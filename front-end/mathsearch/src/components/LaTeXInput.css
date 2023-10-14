@@ -1,40 +1,40 @@
-.latex-input-container{
-    width: 100%;
+.latex-input-container {
+  width: 100%;
 }
 
-.latex-input-content{
-    display: flex;
-    flex-direction: column;
+.latex-input-content {
+  display: flex;
+  flex-direction: column;
 }
 
 textarea {
-    width: 100%;
-    padding: 20px;
-    border: 1px solid #333;
-    border-radius: 40px;
-    min-height: 10vh;
-    height: 10vh;
-    color: #eee;
-    background-color: #333;
-    font-size: 1.5em;
-    font-family: "Courier", monospace;
-    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-    box-sizing: border-box;
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #333;
+  border-radius: 40px;
+  min-height: 10vh;
+  height: 10vh;
+  color: #eee;
+  background-color: #333;
+  font-size: 1.5em;
+  font-family: "Courier", monospace;
+  -webkit-box-sizing: border-box;
+  /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box;
+  /* Firefox, other Gecko */
+  box-sizing: border-box;
 }
 
 .output {
-    width: 100%;
-    min-height: 15vh;
-    height: max-content;
-    border: 1px solid #333;
-    border-radius: 40px;
-    background-color: #333;
-    color: #eee;
-    font-size: 1.5em;
-    padding: 20px;
+  width: 100%;
+  min-height: 15vh;
+  height: max-content;
+  border: 1px solid #333;
+  border-radius: 40px;
+  background-color: #333;
+  color: #eee;
+  font-size: 1.5em;
+  padding: 20px;
 }
 
-#MathPreview {
-
-}
+#MathPreview {}
