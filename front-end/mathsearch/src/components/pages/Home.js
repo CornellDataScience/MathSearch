@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import NavBar from '../NavBar.js';
 
 import UploadPDFToS3WithNativeSdk from '../UploadPDFToS3WithNativeSdk.js';
 import LaTeXInput from '../LaTeXInput.js';
@@ -9,6 +10,7 @@ import '../../App.css';
 import './Home.css'
 
 function Home() {
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const redirect = async () => {
     // Test code
@@ -34,7 +36,7 @@ function Home() {
     // const json = await response.json();
     // console.log("hello")
     // console.log(json)
-    navigate('/results',{state:{pdf:pdfBinary, pages:pages}})
+    navigate('/results', { state: { pdf: pdfBinary, pages: pages } })
   }
 
   const test_api = async () => {
@@ -43,21 +45,35 @@ function Home() {
     console.log(await response.text());
   }
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    setLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 5000));
     redirect()
     // test_api()
   }
 
   return (
     <>
-      <div className="home-container">
-        <div className="home-content">
-          <h1 className="title">MathSearch</h1>
-          <LaTeXInput/>
-          <UploadPDFToS3WithNativeSdk />
-          <button onClick={handleClick}>Redirect to results</button>
+      {loading ?
+        <div class="page">
+          <div class="center">
+            <div class="loader"></div>
+          </div>
+
         </div>
-      </div>
+        :
+        <div>
+          <NavBar />
+          <div className="home-container">
+            <div className="home-content">
+              <h1 className="title">MathSearch</h1>
+              <LaTeXInput />
+              <UploadPDFToS3WithNativeSdk />
+              <button onClick={handleClick}>Redirect to results</button>
+            </div>
+          </div>
+        </div>
+      }
     </>
   );
 }

@@ -1,5 +1,5 @@
 // External library imports
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 import {
   BrowserRouter as Router,
@@ -20,19 +20,18 @@ import Results from './components/pages/Results.js';
 import './App.css';
 
 function App() {
-   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
-   return (
+  return (
     <>
       <Router>
-        <NavBar />
         {/* Add persistent components*/}
         <Routes>
           {/* Add Routes */}
           {/*  <Route exact path='/' element={<Component />} /> */}
-          <Route exact path='/' element={<Home/>} />
-          <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile}/>}/>
-          <Route exact path='/results' element={<Results />}/>
+          <Route exact path='/' element={<Home />} />
+          <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile} />} />
+          <Route exact path='/results' element={<Results />} />
         </Routes>
       </Router>
     </>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
 import "./Results.css";
-import {useLocation} from 'react-router-dom';
+import NavBar from '../NavBar.js';
+import { useLocation } from 'react-router-dom';
 
 const Results = () => {
   /**
@@ -10,7 +11,7 @@ const Results = () => {
     * @param pdf is the pdf to render
     * @param pages is the list of page numbers
     */
-  
+
   const data = useLocation().state
 
 
@@ -45,57 +46,58 @@ const Results = () => {
 
   return (
     <>
+      <NavBar />
       {
         (data.pdf && data.pages) &&
-      <div style={{ background: "lightgray" }}>
-        <br />
-        <div className="grid-container">
-          {/* Empty column */}
-          <div></div>
+        <div style={{ background: "lightgray" }}>
+          <br />
+          <div className="grid-container">
+            {/* Empty column */}
+            <div></div>
 
-          {/* PDF */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              height: "90vh",
-              overflow: "scroll",
-            }}
-          >
-            <Document file={data.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
-              {renderPages().map((item, index) => (
-                <div id={index + 1}>
-                  {item}
-                  <br />
+            {/* PDF */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                height: "90vh",
+                overflow: "scroll",
+              }}
+            >
+              <Document file={data.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
+                {renderPages().map((item, index) => (
+                  <div id={index + 1}>
+                    {item}
+                    <br />
+                  </div>
+                ))}
+              </Document>
+            </div>
+
+            {/* Nav buttons */}
+            <div
+              style={{
+                background: "white",
+                borderRadius: "1em",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ padding: "1em" }}>
+                <div style={{ textAlign: "center", paddingBottom: "2em" }}>
+                  <b>Results</b>
                 </div>
-              ))}
-            </Document>
-          </div>
-
-          {/* Nav buttons */}
-          <div
-            style={{
-              background: "white",
-              borderRadius: "1em",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <div style={{ padding: "1em" }}>
-              <div style={{ textAlign: "center", paddingBottom: "2em" }}>
-                <b>Results</b>
+                {data.pages.map((item, index) => (
+                  <div>
+                    <button className="button" onClick={() => scroll(item)}>
+                      Page {item}
+                    </button>
+                  </div>
+                ))}
               </div>
-              {data.pages.map((item, index) => (
-                <div>
-                  <button className="button" onClick={() => scroll(item)}>
-                    Page {item}
-                  </button>
-                </div>
-              ))}
             </div>
           </div>
         </div>
-      </div>
       }
     </>
   );
