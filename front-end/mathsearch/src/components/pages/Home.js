@@ -68,7 +68,7 @@ function Home() {
             <div className="home-content">
               <h1 className="title">MathSearch</h1>
               <LaTeXInput />
-              <UploadPDFToS3WithNativeSdk />
+              {/* <UploadPDFToS3WithNativeSdk /> */}
               <button onClick={handleClick}>Redirect to results</button>
             </div>
           </div>
