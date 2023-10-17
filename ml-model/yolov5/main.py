@@ -80,8 +80,9 @@ def send_result_to_frontend(pdf_name):
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             # adding page number and coords for each re-rank
-            # # result_coords += str(int(row[0])+1) + " "
-            result_coords += row[0] + " "
+            result_coords += str(int(row[0])+1) + " "
+
+            # result_coords += row[0] + " "
             result_coords += row[3] + " "
             result_coords += row[4] + " "
             result_coords += row[5] + " "
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     print(target_name)
 
     remove_files()
-    time.sleep(10)
+    time.sleep(5)
     download_files(pdf_name,target_name)
 
     # prefix example:

@@ -2,7 +2,8 @@
 ml-model/formula_images/
 ml-model/output/
 ml-model/crop_formula_images/
-
+ml-model/yolov5/config.py
+.vscode/
 
 output.zip
 *.zip
@@ -15,6 +16,7 @@ data/
 simese_data/
 venv/
 ml-model/model.pt
+ml-model/yolov5/preprocess_data/
 training_data/
 *.png
 im2latex/
@@ -25,4 +27,4 @@ venv/
 ml-model/paths_output.csv
 
 ml-model/web/__pycache__/
-
+datasets/
