@@ -1,4 +1,8 @@
 
+.env
+.DS_Store
+__pycache__/
+
 ml-model/formula_images/
 ml-model/output/
 ml-model/crop_formula_images/
