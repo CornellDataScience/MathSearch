@@ -17,6 +17,8 @@ function Home() {
     // try {
     const url = "http://mathsearch.org/api/response_pdf";
     const response = await fetch(url);
+    // console.log("COOL")
+    // console.log(response)
     const pdfBinary = await response.blob()
 
     const url2 = "http://mathsearch.org/api/response_pages"
@@ -47,7 +49,7 @@ function Home() {
 
   const handleClick = async () => {
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // await new Promise(resolve => setTimeout(resolve, 5000));
     redirect()
     // test_api()
   }
