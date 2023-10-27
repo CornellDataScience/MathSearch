@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
 import "./Results.css";
 import NavBar from '../NavBar.js';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 const Results = () => {
   /**
@@ -14,6 +14,10 @@ const Results = () => {
 
   const data = useLocation().state
 
+  /**
+   * request id is passed from the url
+   */
+  const { requestId } = useParams();
 
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);

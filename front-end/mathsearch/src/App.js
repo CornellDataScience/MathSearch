@@ -30,8 +30,8 @@ function App() {
           {/* Add Routes */}
           {/*  <Route exact path='/' element={<Component />} /> */}
           <Route exact path='/' element={<Home />} />
-          <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile} />} />
-          <Route exact path='/results' element={<Results />} />
+          {/* <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile} />} /> */}
+          <Route path='/results/:requestid' element={<Results />} />
         </Routes>
       </Router>
     </>

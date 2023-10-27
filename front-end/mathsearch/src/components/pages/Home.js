@@ -38,7 +38,7 @@ function Home() {
     // const json = await response.json();
     // console.log("hello")
     // console.log(json)
-    navigate('/results', { state: { pdf: pdfBinary, pages: pages } })
+    navigate('/results/request_id_here', { state: { pdf: pdfBinary, pages: pages } })
   }
 
   const test_api = async () => {
