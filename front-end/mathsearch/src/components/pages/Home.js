@@ -51,6 +51,13 @@ function Home() {
     // setLoading(true)
     // await new Promise(resolve => setTimeout(resolve, 5000));
     // redirect()
+
+    // Send an API request with uploaded PDF blob
+    // Current request is a placeholder, replace with something else later
+    // const url = "http://mathsearch.org/api/send_request"
+    // const response = await fetch(url);
+
+    // Navigate to results page to wait for result
     navigate('/results/request_id_here')
     // test_api()
   }
