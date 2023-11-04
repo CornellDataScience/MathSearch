@@ -10,9 +10,12 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "aws-sdk": "^2.1237.0",
+    "aws-amplify": "^5.3.11",
+    "aws-amplify-react": "^5.1.43",
+    "aws-sdk": "^2.1373.0",
     "bootstrap": "^5.2.2",
     "dotenv": "^16.0.3",
+    "fs": "^0.0.1-security",
     "katex": "^0.16.3",
     "mathjax-react": "^2.0.1",
     "react": "^18.2.0",
@@ -50,6 +53,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
   },
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
   "main": "index.js",
