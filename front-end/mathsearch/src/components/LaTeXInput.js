@@ -32,6 +32,7 @@ function LaTeXInput() {
   const navigate = useNavigate()
 
   const [text, setText] = useState("")
+  const [focus, setFocus] = useState(false)
 
   const handleClick = async () => {
     // setLoading(true)
@@ -48,8 +49,19 @@ function LaTeXInput() {
     // test_api()
   }
 
+  // When user types in the search bar
   const handleChange = async (event) => {
     setText(event.target.value)
+  }
+
+  // When user clicks into the search bar
+  const handleFocus = async (event) => {
+    setFocus(true)
+  }
+
+  // When user clicks out of the search bar
+  const handleBlur = async (event) => {
+    setFocus(false)
   }
 
   return (
@@ -59,28 +71,34 @@ function LaTeXInput() {
           <div className="input">
             <textarea
               rows="1"
-              className={text === "" ? "searchbar searchbar-empty" : "searchbar searchbar-full"}
+              className={!focus ? "searchbar searchbar-empty" : "searchbar searchbar-full"}
               placeholder="Try the Basel Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
               id="MathInput"
               onKeyUp={updatePreview}
               onChange={handleChange}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             >
             </textarea>
           </div>
-          {text === "" ?
-            <div style={{ visibility: "hidden" }} className="output">
-              <div id="MathPreview"></div>
-            </div>
-            :
-            <div className="output">
-              <div id="MathPreview"></div>
-            </div>
-          }
+          <div style={{ position: "absolute", top: "calc(50% + 65px)", width: "760px" }}>
+            {!focus ?
+              <div style={{ visibility: "hidden" }} className="output">
+                <div id="MathPreview"></div>
+              </div>
+              :
+              <div className="output">
+                <div id="MathPreview"></div>
+              </div>
+            }
+          </div>
         </div>
-        <input className="form-control" type="file" id="formFile" />
-        {/* <UploadPDFToS3WithNativeSdk /> */}
-        <button onClick={handleClick}>Redirect to results</button>
-        {/* <button onClick={log_image}>log image!</button> */}
+        <div className="w-100 pt-4">
+          <input className="form-control" type="file" id="formFile" />
+          {/* <UploadPDFToS3WithNativeSdk /> */}
+          {/* <button onClick={handleClick}>Redirect to results</button> */}
+          {/* <button onClick={log_image}>log image!</button> */}
+        </div>
       </div>
     </>
   );
