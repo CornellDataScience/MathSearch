@@ -7,22 +7,31 @@
   flex-direction: column;
 }
 
-textarea {
+textarea.searchbar {
   width: 100%;
   padding: 20px;
   border: 1px solid #333;
-  border-radius: 40px;
-  min-height: 10vh;
-  height: 10vh;
+  /* border-radius: 40px; */
+  resize: none;
+  /* min-height: 10vh; */
+  /* height: 10vh; */
   color: #eee;
   background-color: #333;
-  font-size: 1.5em;
+  /* font-size: 1.5em; */
   font-family: "Courier", monospace;
-  -webkit-box-sizing: border-box;
+  /* -webkit-box-sizing: border-box; */
   /* Safari/Chrome, other WebKit */
-  -moz-box-sizing: border-box;
+  /* -moz-box-sizing: border-box; */
   /* Firefox, other Gecko */
-  box-sizing: border-box;
+  /* box-sizing: border-box; */
+}
+
+textarea.searchbar-empty {
+  border-radius: 30px;
+}
+
+textarea.searchbar-full {
+  border-radius: 30px 30px 0px 0px;
 }
 
 .output {
@@ -30,7 +39,7 @@ textarea {
   min-height: 15vh;
   height: max-content;
   border: 1px solid #333;
-  border-radius: 40px;
+  border-radius: 0px 0px 40px 40px;
   background-color: #333;
   color: #eee;
   font-size: 1.5em;

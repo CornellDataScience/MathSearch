@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import NavBar from '../NavBar.js';
 
+import 'bootstrap/dist/js/bootstrap.min.js';
+import 'bootstrap/dist/css/bootstrap.css';
+
 import UploadPDFToS3WithNativeSdk from '../UploadPDFToS3WithNativeSdk.js';
 import LaTeXInput from '../LaTeXInput.js';
 import pdf from "./sample.pdf"
@@ -11,7 +14,7 @@ import './Home.css'
 
 function Home() {
   // const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   // const redirect = async () => {
   //   // Test code
   //   // try {
@@ -47,20 +50,20 @@ function Home() {
   //   console.log(await response.text());
   // }
 
-  const handleClick = async () => {
-    // setLoading(true)
-    // await new Promise(resolve => setTimeout(resolve, 5000));
-    // redirect()
+  // const handleClick = async () => {
+  //   // setLoading(true)
+  //   // await new Promise(resolve => setTimeout(resolve, 5000));
+  //   // redirect()
 
-    // Send an API request with uploaded PDF blob
-    // Current request is a placeholder, replace with something else later
-    // const url = "http://mathsearch.org/api/send_request"
-    // const response = await fetch(url);
+  //   // Send an API request with uploaded PDF blob
+  //   // Current request is a placeholder, replace with something else later
+  //   // const url = "http://mathsearch.org/api/send_request"
+  //   // const response = await fetch(url);
 
-    // Navigate to results page to wait for result
-    navigate('/results/request_id_here')
-    // test_api()
-  }
+  //   // Navigate to results page to wait for result
+  //   navigate('/results/request_id_here')
+  //   // test_api()
+  // }
 
   return (
     <>
@@ -69,10 +72,8 @@ function Home() {
         <div className="home-content">
           <h1 className="title">MathSearch</h1>
           <LaTeXInput />
-          {/* <UploadPDFToS3WithNativeSdk /> */}
-          <button onClick={handleClick}>Redirect to results</button>
         </div>
-      </div>
+      </div >
     </>
   );
 }
