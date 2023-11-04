@@ -13,7 +13,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 // Internal component imports
 import NavBar from './components/NavBar.js';
 import Home from './components/pages/Home.js';
-import ReturnPage from './components/pages/ReturnPage.js';
+// import ReturnPage from './components/pages/ReturnPage.js';
 import Results from './components/pages/Results.js';
 
 // Internal CSS imports
