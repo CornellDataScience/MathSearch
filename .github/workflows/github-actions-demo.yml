@@ -17,5 +17,5 @@ jobs:
           ls ${{ github.workspace }}
       - name: Run linter
         run: |
-          /linting-testing-workflow/linter.sh
+          ${{ github.workspace }}/linting-testing-workflow/linter.sh
       - run: echo "This job's status is ${{ job.status }}."
