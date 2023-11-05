@@ -78,19 +78,21 @@ function LaTeXInput() {
               onChange={handleChange}
               onFocus={handleFocus}
               onBlur={handleBlur}
-            >
-            </textarea>
+            />
           </div>
-          <div style={{ position: "absolute", top: "calc(50% + 65px)", width: "760px" }}>
-            {!focus ?
-              <div style={{ visibility: "hidden" }} className="output">
-                <div id="MathPreview"></div>
-              </div>
-              :
-              <div className="output">
-                <div id="MathPreview"></div>
-              </div>
-            }
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", width: "100%" }}>
+              {!focus ?
+                <div className="output" style={{ display: "none" }}>
+                  <div id="MathPreview"></div>
+                </div>
+                :
+                <div className="output">
+                  <div id="MathPreview"></div>
+                </div>
+              }
+            </div>
+
           </div>
         </div>
         <div className="w-100 pt-4">
