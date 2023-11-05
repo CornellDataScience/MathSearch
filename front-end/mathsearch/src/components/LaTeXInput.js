@@ -68,10 +68,11 @@ function LaTeXInput() {
     <>
       <div className="latex-input-container">
         <div className="latex-input-content">
-          <div className="input">
+          {/* Math input */}
+          <div className="input-group">
             <textarea
               rows="1"
-              className={!focus ? "searchbar searchbar-empty" : "searchbar searchbar-full"}
+              className={!focus ? "form-control shadow-none searchbar searchbar-empty" : "form-control shadow-none searchbar searchbar-full"}
               placeholder="Try the Basel Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
               id="MathInput"
               onKeyUp={updatePreview}
@@ -79,8 +80,15 @@ function LaTeXInput() {
               onFocus={handleFocus}
               onBlur={handleBlur}
             />
+            {!focus ?
+              <button className="btn btn-dark" style={{ borderRadius: "0px 30px 30px 0px" }} type="button">Search</button>
+              :
+              <button className="btn btn-dark" style={{ borderRadius: "0px 30px 00px 0px" }} type="button">Search</button>
+            }
           </div>
-          <div style={{ position: "relative" }}>
+
+          {/* Math output preview */}
+          <div style={{ position: "relative", paddingTop: 1 }}>
             <div style={{ position: "absolute", width: "100%" }}>
               {!focus ?
                 <div className="output" style={{ display: "none" }}>

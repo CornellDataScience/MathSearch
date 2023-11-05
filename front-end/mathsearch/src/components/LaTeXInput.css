@@ -10,13 +10,13 @@
 textarea.searchbar {
   width: 100%;
   padding: 20px;
-  border: 1px solid #333;
+  border: 1px solid #333 !important;
   /* border-radius: 40px; */
   resize: none;
   /* min-height: 10vh; */
   /* height: 10vh; */
-  color: #eee;
-  background-color: #333;
+  color: #eee !important;
+  background-color: #333 !important;
   /* font-size: 1.5em; */
   font-family: "Courier", monospace;
   /* -webkit-box-sizing: border-box; */
@@ -24,6 +24,10 @@ textarea.searchbar {
   /* -moz-box-sizing: border-box; */
   /* Firefox, other Gecko */
   /* box-sizing: border-box; */
+}
+
+textarea:focus {
+  outline: none !important;
 }
 
 textarea.searchbar-empty {
