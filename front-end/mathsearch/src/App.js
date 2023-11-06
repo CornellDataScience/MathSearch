@@ -15,6 +15,7 @@ import NavBar from './components/NavBar.js';
 import Home from './components/pages/Home.js';
 // import ReturnPage from './components/pages/ReturnPage.js';
 import Results from './components/pages/Results.js';
+import About from './components/pages/About.js';
 
 // Internal CSS imports
 import './App.css';
@@ -32,6 +33,7 @@ function App() {
           <Route exact path='/' element={<Home />} />
           {/* <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile} />} /> */}
           <Route path='/results/:requestid' element={<Results />} />
+          <Route path='/about' element={<About />} />
         </Routes>
       </Router>
     </>

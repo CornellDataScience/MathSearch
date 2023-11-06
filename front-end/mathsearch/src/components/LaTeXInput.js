@@ -81,9 +81,9 @@ function LaTeXInput() {
               onBlur={handleBlur}
             />
             {!focus ?
-              <button className="btn btn-dark" style={{ borderRadius: "0px 30px 30px 0px" }} type="button">Search</button>
+              <button onClick={handleClick} className="btn btn-dark" style={{ borderRadius: "0px 30px 30px 0px" }} type="button">Search</button>
               :
-              <button className="btn btn-dark" style={{ borderRadius: "0px 30px 00px 0px" }} type="button">Search</button>
+              <button onClick={handleClick} className="btn btn-dark" style={{ borderRadius: "0px 30px 00px 0px" }} type="button">Search</button>
             }
           </div>
 
