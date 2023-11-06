@@ -11,8 +11,17 @@
 
 .home-content>h1 {
   font-weight: bold;
-  font-size: 4.5rem;
+  font-size: 3rem;
 }
+
+/* Media query for large screens */
+@media screen and (min-width: 760px) {
+  .home-content>h1 {
+    font-size: 4.5rem;
+  }
+}
+
+
 
 .home-content {
   display: flex;
