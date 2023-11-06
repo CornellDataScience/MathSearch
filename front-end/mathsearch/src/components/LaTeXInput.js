@@ -88,7 +88,7 @@ function LaTeXInput() {
           </div>
 
           {/* Math output preview */}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", paddingTop: 1 }}>
             <div style={{ position: "absolute", width: "100%" }}>
               {!focus ?
                 <div className="output" style={{ display: "none" }}>
