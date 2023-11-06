@@ -67,13 +67,15 @@ function Home() {
 
   return (
     <>
-      <NavBar />
-      <div className="home-container">
-        <div className="home-content">
-          <h1 className="title">MathSearch</h1>
-          <LaTeXInput />
+      <div style={{ backgroundColor: "#eeeeee", minHeight: "100vh" }}>
+        <NavBar />
+        <div className="home-container">
+          <div className="home-content">
+            <h1 className="title">MathSearch</h1>
+            <LaTeXInput />
+          </div>
         </div>
-      </div >
+      </div>
     </>
   );
 }
