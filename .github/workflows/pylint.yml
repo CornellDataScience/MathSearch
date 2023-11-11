@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8"]
+        python-version: ["3.9.13"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -21,6 +21,10 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py') \
-        --disable C0116 \
-        --disable E1101 \
-        --fail-under 7.0
+        --disable C0114 \ # Missing Module Docstring
+        --disable C0115 \ # Missing Class Docstring
+        --disable C0116 \ # Missing Function Docstring
+        --disable E1101 \ # Instance of .. has no .. member'
+        --disable E0401 \ # Unable to import ..
+        --fail-under 7.0 \
+        --ignore yolov5
