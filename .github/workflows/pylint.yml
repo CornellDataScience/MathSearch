@@ -1,6 +1,6 @@
 name: Pylint
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
@@ -21,10 +21,15 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py') \
-        --disable C0114 \ # Missing Module Docstring
-        --disable C0115 \ # Missing Class Docstring
-        --disable C0116 \ # Missing Function Docstring
-        --disable E1101 \ # Instance of .. has no .. member'
-        --disable E0401 \ # Unable to import ..
+        # Missing Module Docstring
+        --disable C0114 \
+        # Missing Class Docstring
+        --disable C0115 \
+        # Missing Function Docstring
+        --disable C0116 \
+        # Instance of .. has no .. member
+        --disable E1101 \
+        # Unable to import ..
+        --disable E0401 \
         --fail-under 7.0 \
-        --ignore yolov5
+        --ignore-paths re.compile("^/ml-model/yolov5")
