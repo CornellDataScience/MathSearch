@@ -20,7 +20,7 @@ AWS.config.credentials = new CognitoIdentityCredentials({
 function UploadPDFToS3WithNativeSdk() {
   const navigate = useNavigate();
   const toReturnPage = () => {
-    navigate('/returnpage', {state:{selectedFile: selectedFile}})
+    navigate('/returnpage', { state: { selectedFile: selectedFile } })
   }
 
 
@@ -90,50 +90,50 @@ function UploadPDFToS3WithNativeSdk() {
               if (err) console.log(err)
             });
 
-            let msg = {
-              uuid: uuidKey,
-              pdf_path: fileKey,
-              image_path: imageKey
-            }
-    
-            const requestOptions = {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(msg)
+          let msg = {
+            uuid: uuidKey,
+            pdf_path: fileKey,
+            image_path: imageKey
+          }
+
+          const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(msg)
           };
-            fetch(process.env.REACT_APP_UPLOAD, requestOptions)
+          fetch(process.env.REACT_APP_UPLOAD, requestOptions)
             .then(async response => {
-                const isJson = response.headers.get('content-type')?.includes('application/json');
-                const data = isJson && await response.json();
-    
-                // check for error response
-                if (!response.ok) {
-                    // get error message from body or default to response status
-                    const error = (data && data.message) || response.status;
-                    return Promise.reject(error);
-                }
-    
-                console.log('Message sent to backend success!')
-                console.log(response)
+              const isJson = response.headers.get('content-type')?.includes('application/json');
+              const data = isJson && await response.json();
+
+              // check for error response
+              if (!response.ok) {
+                // get error message from body or default to response status
+                const error = (data && data.message) || response.status;
+                return Promise.reject(error);
+              }
+
+              console.log('Message sent to backend success!')
+              console.log(response)
             })
             .catch(error => {
-                // this.setState({ errorMessage: error.toString() });
-                console.error('There was an error!', error);
+              // this.setState({ errorMessage: error.toString() });
+              console.error('There was an error!', error);
             });
-    
-            // const sqsParams = {
-            //   MessageBody: JSON.stringify(msg)
-            // }
-    
-            // mySQS.sendMessage(sqsParams, function(err, data){
-            //   if (err) {
-            //     console.log("Error: ", err)
-            //   } else {
-            //     console.log("Success: ", data.MessageId);
-            //   }
-            // });
-    
-            toReturnPage();
+
+          // const sqsParams = {
+          //   MessageBody: JSON.stringify(msg)
+          // }
+
+          // mySQS.sendMessage(sqsParams, function(err, data){
+          //   if (err) {
+          //     console.log("Error: ", err)
+          //   } else {
+          //     console.log("Success: ", data.MessageId);
+          //   }
+          // });
+
+          toReturnPage();
         });
     });
   };
