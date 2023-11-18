@@ -32,4 +32,4 @@ jobs:
         # Unable to import ..
         --disable E0401 \
         --fail-under 7.0 \
-        --ignore yolov5/
+        --ignore-paths ^ml-model/yolov5/.*$
