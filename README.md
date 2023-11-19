@@ -5,8 +5,9 @@ A next generation search engine for researchers that supports searching with LaT
 Refer to our [wiki](https://github.com/CornellDataScience/MathSearch/wiki) to get started :-)
 
 
-### Contribution List:
-2022 Fall Leads: Alexander Wang, Kaitlyn Chen  
-2023 Spring Leads: Emerald Liu, Johann Lee  
-2023 Fall Leads: Travis Zhang, Pun Chaixanien  
+### Developers:
+__2022 Fall Leads:__  Alexander Wang, Kaitlyn Chen  
+__2023 Spring Leads:__  Emerald Liu, Johann Lee  
+__2023 Fall Leads:__  Travis Zhang, Pun Chaixanien  
+__Contributing members:__  
 Jason Zheng, Darren Key, Felix Hohne, Laura Gong, Mason Bulling, Ronin Sharma, Ryan Lee, Varun Gande, Vivian Chen, Alice Um, Deniz BT, Cade Jin, Andrea Siby, Jerry Chen, Katie Zelvin
