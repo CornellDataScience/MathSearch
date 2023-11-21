@@ -1,9 +1,8 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 
 import UploadPDFToS3WithNativeSdk from '../UploadPDFToS3WithNativeSdk.js';
 import LaTeXInput from '../LaTeXInput.js';
-import pdf from "./sample.pdf"
 
 import '../../App.css';
 import './Home.css'
@@ -34,7 +33,7 @@ function Home() {
     // const json = await response.json();
     // console.log("hello")
     // console.log(json)
-    navigate('/results',{state:{pdf:pdfBinary, pages:pages}})
+    navigate('/results', { state: { pdf: pdfBinary, pages: pages } })
   }
 
   const test_api = async () => {
@@ -53,7 +52,7 @@ function Home() {
       <div className="home-container">
         <div className="home-content">
           <h1 className="title">MathSearch</h1>
-          <LaTeXInput/>
+          <LaTeXInput />
           <UploadPDFToS3WithNativeSdk />
           <button onClick={handleClick}>Redirect to results</button>
         </div>
