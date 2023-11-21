@@ -1,40 +1,53 @@
-.latex-input-container{
-    width: 100%;
+.latex-input-container {
+  width: 100%;
 }
 
-.latex-input-content{
-    display: flex;
-    flex-direction: column;
+.latex-input-content {
+  display: flex;
+  flex-direction: column;
 }
 
-textarea {
-    width: 100%;
-    padding: 20px;
-    border: 1px solid #333;
-    border-radius: 40px;
-    min-height: 10vh;
-    height: 10vh;
-    color: #eee;
-    background-color: #333;
-    font-size: 1.5em;
-    font-family: "Courier", monospace;
-    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-    box-sizing: border-box;
+textarea.searchbar {
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #333 !important;
+  /* border-radius: 40px; */
+  resize: none;
+  /* min-height: 10vh; */
+  /* height: 10vh; */
+  color: #eee !important;
+  background-color: #333 !important;
+  /* font-size: 1.5em; */
+  font-family: "Courier", monospace;
+  /* -webkit-box-sizing: border-box; */
+  /* Safari/Chrome, other WebKit */
+  /* -moz-box-sizing: border-box; */
+  /* Firefox, other Gecko */
+  /* box-sizing: border-box; */
+}
+
+textarea:focus {
+  outline: none !important;
+}
+
+textarea.searchbar-empty {
+  border-radius: 30px;
+}
+
+textarea.searchbar-full {
+  border-radius: 30px 30px 0px 0px;
 }
 
 .output {
-    width: 100%;
-    min-height: 15vh;
-    height: max-content;
-    border: 1px solid #333;
-    border-radius: 40px;
-    background-color: #333;
-    color: #eee;
-    font-size: 1.5em;
-    padding: 20px;
+  width: 100%;
+  min-height: 15vh;
+  height: max-content;
+  border: 1px solid #333;
+  border-radius: 0px 0px 40px 40px;
+  background-color: #333;
+  color: #eee;
+  font-size: 1.5em;
+  padding: 20px;
 }
 
-#MathPreview {
-
-}
+#MathPreview {}
