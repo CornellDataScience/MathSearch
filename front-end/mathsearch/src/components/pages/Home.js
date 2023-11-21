@@ -7,7 +7,6 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import UploadPDFToS3WithNativeSdk from '../UploadPDFToS3WithNativeSdk.js';
 import LaTeXInput from '../LaTeXInput.js';
-import pdf from "./sample.pdf"
 
 import '../../App.css';
 import './Home.css'
