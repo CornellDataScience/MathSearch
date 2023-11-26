@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom'
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
+import { CognitoIdentityCredentials } from 'aws-sdk/global';
+import AWS from 'aws-sdk';
+import { v4 } from 'uuid';
 
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +17,7 @@ function updatePreview() {
 }
 
 function get_image() {
-  let tex = document.getElementById('MathInput').value;
+  var tex = document.getElementById('MathInput').value
   var url = "http://chart.apis.google.com/chart?&cht=tx&chl=" +
     encodeURIComponent(tex) +
     "&chof=png";
@@ -31,7 +34,8 @@ function log_image() {
 // Constants for Amazon Cognito Identity Pool
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID
 const REGION = process.env.REACT_APP_REGION;
-const S3_BUCKET = process.env.REACT_APP_S3_BUCKET;
+// const S3_INPUT_BUCKET = process.env.REACT_APP_S3_INPUT_BUCKET;
+const S3_INPUT_BUCKET = "mathsearch-intermediary";
 
 AWS.config.region = REGION;
 
@@ -48,6 +52,17 @@ function LaTeXInput() {
   const [text, setText] = useState("")
   const [focus, setFocus] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null);
+  const [progress, setProgress] = useState(0);
+
+  /**
+   * Convert some text to a url which is an image
+   */
+  const convert_text_to_image_url = (text) => {
+    var url = "http://chart.apis.google.com/chart?&cht=tx&chl=" +
+      encodeURIComponent(text) +
+      "&chof=png";
+    return url;
+  }
 
   const uploadRequest = (file, text) => {
     AWS.config.credentials.get((err) => {
@@ -57,7 +72,7 @@ function LaTeXInput() {
       }
 
       const myBucket = new AWS.S3({
-        params: { Bucket: S3_BUCKET },
+        params: { Bucket: S3_INPUT_BUCKET },
         region: REGION,
       });
 
@@ -65,15 +80,17 @@ function LaTeXInput() {
       const fileKey = 'inputs/' + uuidKey + '_pdf';
       const imageKey = 'inputs/' + uuidKey + '_image';
 
-      const imageURL = get_image();
+      const imageURL = convert_text_to_image_url(text);
 
+      console.log(S3_INPUT_BUCKET)
+      // Fetch image and upload to S3 input bucket
       fetch(imageURL)
         .then(response => response.blob())
         .then(blob => {
           const imageParams = {
             ACL: 'public-read',
             Body: blob,
-            Bucket: S3_BUCKET,
+            Bucket: S3_INPUT_BUCKET,
             Key: imageKey
           };
 
@@ -85,11 +102,13 @@ function LaTeXInput() {
               if (err) console.log(err)
             });
         })
+
+        // Upload PDF to S3 input bucket
         .then(() => {
           const pdfParams = {
             ACL: 'public-read',
             Body: file,
-            Bucket: S3_BUCKET,
+            Bucket: S3_INPUT_BUCKET,
             Key: fileKey
           };
 
@@ -101,36 +120,36 @@ function LaTeXInput() {
               if (err) console.log(err)
             });
 
-          let msg = {
-            uuid: uuidKey,
-            pdf_path: fileKey,
-            image_path: imageKey
-          }
+          // let msg = {
+          //   uuid: uuidKey,
+          //   pdf_path: fileKey,
+          //   image_path: imageKey
+          // }
 
-          const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(msg)
-          };
-          fetch(process.env.REACT_APP_UPLOAD, requestOptions)
-            .then(async response => {
-              const isJson = response.headers.get('content-type')?.includes('application/json');
-              const data = isJson && await response.json();
+          // const requestOptions = {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify(msg)
+          // };
+          // fetch(process.env.REACT_APP_UPLOAD, requestOptions)
+          //   .then(async response => {
+          //     const isJson = response.headers.get('content-type')?.includes('application/json');
+          //     const data = isJson && await response.json();
 
-              // check for error response
-              if (!response.ok) {
-                // get error message from body or default to response status
-                const error = (data && data.message) || response.status;
-                return Promise.reject(error);
-              }
+          //     // check for error response
+          //     if (!response.ok) {
+          //       // get error message from body or default to response status
+          //       const error = (data && data.message) || response.status;
+          //       return Promise.reject(error);
+          //     }
 
-              console.log('Message sent to backend success!')
-              console.log(response)
-            })
-            .catch(error => {
-              // this.setState({ errorMessage: error.toString() });
-              console.error('There was an error!', error);
-            });
+          //     console.log('Message sent to backend success!')
+          //     console.log(response)
+          //   })
+          //   .catch(error => {
+          //     // this.setState({ errorMessage: error.toString() });
+          //     console.error('There was an error!', error);
+          //   });
         });
     });
   }
@@ -146,9 +165,17 @@ function LaTeXInput() {
     // const response = await fetch(url);
 
     // Navigate to results page to wait for result
-    uploadRequest(selectedFile, text)
-    navigate('/results/request_id_here')
     // test_api()
+
+
+    // IGNORE CODE ABOVE
+
+    // BEGIN TEST
+    // END TEST
+
+    // CODE BELOW IS REAL
+    uploadRequest(selectedFile, text)
+    // navigate('/results/request_id_here')
   }
 
   // When user types in the search bar
@@ -207,7 +234,6 @@ function LaTeXInput() {
                 </div>
               }
             </div>
-
           </div>
         </div>
         <div className="w-100 pt-4">
@@ -222,4 +248,4 @@ function LaTeXInput() {
 }
 
 export default LaTeXInput;
-export { get_image };
+export { get_image }
