@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
-// import "react-pdf/dist/esm/Page/TextLayer.css";
 import "./Results.css";
 import NavBar from "../NavBar.js";
 import { useLocation, useParams } from "react-router-dom";
-
 import { CognitoIdentityCredentials } from "aws-sdk/global";
 import AWS from "aws-sdk";
 
