@@ -25,12 +25,11 @@ AWS.config.credentials = new CognitoIdentityCredentials({
 
 const Results = () => {
   /**
-   * All state data passed into this window and must include at least
-   * the following:
+   * Grab route params from the URL
    * @param uuid is unique id of the query
    */
-  const data = useLocation().state;
-  const uuid = data.uuid;
+  const routeParams = useParams();
+  const uuid = routeParams.uuid
 
   /** Data variables */
   const [pdf, setPdf] = useState(null);
@@ -115,6 +114,7 @@ const Results = () => {
   }, [pdfDownloaded, jsonDownloaded]);
 
   const handleTestClick = (event) => {
+    console.log(uuid)
     console.log(pages);
     console.log(pdf);
     console.log(pdfDownloaded);

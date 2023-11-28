@@ -127,7 +127,7 @@ function LaTeXInput() {
   /** Handles when the user clicks the Search button */
   const handleClick = async () => {
     uploadRequest(selectedFile, text);
-    navigate(`/results/${uuid}`, { state: { uuid: uuid } })
+    navigate(`/results/${uuid}`)
   };
 
   /** Handles when user types in the search bar */
