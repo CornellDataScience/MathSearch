@@ -7,22 +7,16 @@ import { useLocation, useParams } from "react-router-dom";
 
 import { CognitoIdentityCredentials } from "aws-sdk/global";
 import AWS from "aws-sdk";
-import { v4 } from "uuid";
-
-
-import hardcoded_pdf from "./asdf.pdf"
 
 /* BEGIN AWS CONSTANTS */
 
 // Constants for Amazon Cognito Identity Pool
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID;
 const REGION = process.env.REACT_APP_REGION;
-// const S3_OUTPUT_BUCKET = process.env.REACT_APP_S3_INPUT_BUCKET;
-const S3_OUTPUT_BUCKET = "mathsearch-outputs";
-
-AWS.config.region = REGION;
+const S3_OUTPUT_BUCKET = process.env.REACT_APP_S3_OUTPUT_BUCKET;
 
 // Initialize the Amazon Cognito credentials provider
+AWS.config.region = REGION;
 AWS.config.credentials = new CognitoIdentityCredentials({
   IdentityPoolId: IDENTITY_POOL_ID,
 });
@@ -30,26 +24,24 @@ AWS.config.credentials = new CognitoIdentityCredentials({
 /* END AWS CONSTANTS */
 
 const Results = () => {
-  // /**
-  //   * All state data passed into this window and must include at least
-  //   * the following:
-  //   * @param pdf is the pdf to render
-  //   * @param pages is the list of page numbers
-  //   */
-
-  // const data = useLocation().state
-
-  /** Data variable */
-  // const [data, setData] = useState(null);
+  /**
+   * All state data passed into this window and must include at least
+   * the following:
+   * @param uuid is unique id of the query
+   */
+  const data = useLocation().state;
+  const uuid = data.uuid;
 
   /** Data variables */
-  const [pdf, setPdf] = useState(null)
-  const [pages, setPages] = useState([])
+  const [pdf, setPdf] = useState(null);
+  const [pages, setPages] = useState([]);
 
-  /** Loading variable */
+  /** Loading variables */
   const [loading, setLoading] = useState(true);
+  const [pdfDownloaded, setPdfDownloaded] = useState(false);
+  const [jsonDownloaded, setJsonDownloaded] = useState(false);
 
-  const downloadRequest = (uuidKey) => {
+  const downloadRequest = (uuid) => {
     AWS.config.credentials.get((err) => {
       if (err) {
         console.log("Error retrieving credentials: ", err);
@@ -60,39 +52,12 @@ const Results = () => {
         region: REGION,
       });
 
-      const fileKey = uuidKey + "_pdf";
-      // const imageKey = uuidKey + "_image";
-      // const imageURL = convert_text_to_image_url(text);
+      const fileKey = uuid + "_pdf";
+      const jsonKey = uuid + "_json";
 
       console.log(S3_OUTPUT_BUCKET);
-      // Fetch image and download from S3 outputs bucket
 
-      // const imageParams = {
-      //   ACL: "public-read",
-      //   Body: blob,
-      //   Bucket: S3_OUTPUT_BUCKET,
-      //   Key: imageKey,
-      // };
-
-      // myBucket.getObject(imageParams, (err, data) => {
-      //   if (err) {
-      //     console.error("Error downloading object:", err);
-      //   } else {
-      //     // Save the downloaded object to a local file
-      //     set
-      //     console.log("Object downloaded successfully!");
-      //   }
-      // });
-
-      // myBucket.getObject(imageParams)
-      //   .on("httpUploadProgress", (evt) => {
-      //     setProgress(Math.round((evt.loaded / evt.total) * 100));
-      //   })
-      //   .send((err) => {
-      //     if (err) console.log(err);
-      //   });
-
-      // Download PDF from S3 input bucket
+      // Download PDF from S3 output bucket
       const pdfParams = {
         Bucket: S3_OUTPUT_BUCKET,
         Key: fileKey,
@@ -100,61 +65,61 @@ const Results = () => {
 
       myBucket.getObject(pdfParams, (err, data) => {
         if (err) {
-          console.error("Error downloading object:", err);
+          console.error("Error downloading PDF:", err);
         } else {
           // Save the downloaded object to a state variable
-          setPdf(data.Body)
-          setPages([1,2,3,4,5,6])
-          console.log("Object downloaded successfully!");
-          // console.log(hardcoded_pdf)
+          setPdf(data.Body);
+          setPdfDownloaded(true);
+          console.log("PDF downloaded successfully!");
         }
       });
 
-      // myBucket
-      //   .getObject(pdfParams)
-      //   .on("httpUploadProgress", (evt) => {
-      //     setProgress(Math.round((evt.loaded / evt.total) * 100));
-      //   })
-      //   .send((err) => {
-      //     if (err) console.log(err);
-      //   });
+      // Download json from S3 output bucket
+      const jsonParams = {
+        Bucket: S3_OUTPUT_BUCKET,
+        Key: jsonKey,
+      };
+
+      myBucket.getObject(jsonParams, (err, data) => {
+        if (err) {
+          console.error("Error downloading JSON:", err);
+        } else {
+          // Save the downloaded object to a state variable
+          let json = JSON.parse(data.Body.toString("utf-8"));
+          let pages = json.pages;
+          setPages(pages);
+          setJsonDownloaded(true);
+          console.log("JSON downloaded successfully!");
+        }
+      });
     });
   };
 
-  /**
-   * Retrieve the data
-   */
+  /** Retrieve the data */
   const fetchData = async () => {
-    // const url = "http://mathsearch.org/api/response_pdf";
-    // const response = await fetch(url);
-
-    // const pdfBinary = await response.blob()
-
-    // const url2 = "http://mathsearch.org/api/response_pages"
-    // const response2 = await fetch(url2);
-    // const pages = await response2.json()
-
-    // Harcode wait 5 seconds
-    downloadRequest("12345")
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    setLoading(false);
-
-    // return { pdf: pdfBinary, pages: pages };
+    if (!pdfDownloaded || !jsonDownloaded) {
+      console.log(pdfDownloaded);
+      console.log(jsonDownloaded);
+      // downloadRequest("123456");
+      downloadRequest(uuid);
+    } else {
+      console.log("Loading is complete!")
+      setLoading(false);
+    }
   };
 
   // Run useEffect only on page load
   useEffect(() => {
-    const func = async () => {
-      // setData(await fetchData());
-      await fetchData("12345")
-    };
-    func();
-  }, []);
+    const intervalId = setInterval(fetchData, 5000);
+    return () => clearInterval(intervalId);
+  }, [pdfDownloaded, jsonDownloaded]);
 
   const handleTestClick = (event) => {
-    console.log(pages)
-    console.log(pdf)
-  }
+    console.log(pages);
+    console.log(pdf);
+    console.log(pdfDownloaded);
+    console.log(jsonDownloaded);
+  };
 
   /**
    * request id is passed from the url
@@ -164,7 +129,6 @@ const Results = () => {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
 
-
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
   }
@@ -173,7 +137,13 @@ const Results = () => {
   const renderPages = () => {
     var pdf = [];
     for (var i = 1; i <= numPages; i++) {
-      pdf.push(<Page renderAnnotationLayer={false} renderTextLayer={false} pageNumber={i} />);
+      pdf.push(
+        <Page
+          renderAnnotationLayer={false}
+          renderTextLayer={false}
+          pageNumber={i}
+        />
+      );
     }
     return pdf;
   };
@@ -186,15 +156,11 @@ const Results = () => {
     }
   };
 
-  // Temporary hardcoding
-  // let pdf_file = data.pdf
-  // let pages = data.pages
-  // console.log(data.pdf, data.pages)
-
   return (
     <>
       {loading ? (
         <div class="page">
+          {/* <button onClick={handleTestClick}>Test</button> */}
           <div class="center">
             <div class="loader"></div>
           </div>
@@ -202,7 +168,7 @@ const Results = () => {
       ) : (
         <>
           <NavBar />
-          <button onClick={handleTestClick}>Test</button>
+          {/* <button onClick={handleTestClick}>Test</button> */}
           {pdf !== null && pages && (
             <div style={{ background: "lightgray" }}>
               <br />
@@ -217,7 +183,7 @@ const Results = () => {
                     justifyContent: "center",
                     height: "90vh",
                     overflow: "scroll",
-                  }}  
+                  }}
                 >
                   <Document
                     file={{ data: pdf }}
