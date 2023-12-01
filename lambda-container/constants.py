@@ -4,8 +4,9 @@ client_indices = {
 }
 
 # SQS
-QUEUE_URL = 'MathSearchQueue-Input'
-OUTPUT_QUEUE_URL = 'MathSearchQueue-Output'
+QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/290365077634/MathSearchSQS'
+OUTPUT_BUCKET = 'mathsearch-outputs'
+# OUTPUT_QUEUE_URL = 'MathSearchQueue-Output'
 
 # Duration before deletion
 DURATION = 86400 * 7
