@@ -108,7 +108,7 @@ def custom_edit_distance(query_tree, other_tree):
 print("Finished custom_edit_distance")
 
 # Returns string which has LaTeX source code
-def image_to_latex_convert(path):
+def image_to_latex_convert(path, query_bool):
     ocr_model_dir = os.environ["LAMBDA_TASK_ROOT"]
     image_resizer_path = f"{ocr_model_dir}/ocr-models/image_resizer.onnx"
     encoder_path = f"{ocr_model_dir}/ocr-models/encoder.onnx"
@@ -119,9 +119,16 @@ def image_to_latex_convert(path):
                 encoder_path=encoder_path,
                 decoder_path=decoder_path,
                 tokenizer_json=tokenizer_json)
-    with open(path, "rb") as f:
-        data = f.read()
-    result, elapse = model(data)
+    
+    # if query_bool, then path is a path to query image; 
+    if query_bool:
+      with open(path, "rb") as f:
+          data = f.read()
+      result, elapse = model(data)
+    else:
+      result, elapse = model(path)
+      print("Latex OCR decoded YOLO image as byte array successfully!")
+    
     return result
 
 print("Finished image_to_latex_convert")
@@ -209,9 +216,9 @@ def final_output(pdf_name, bounding_boxes):
   pdf_out = PDF_OUT_DIR + pdf_name[:-4]+".pdf"
   pdf_no_ext = pdf_name[:-4]
 
-  if(len(bounding_boxes) % 5 != 0):
-    print("Invalid number of coordinates, must be multiple of 5")
-    return
+  # if(len(bounding_boxes) % 5 != 0):
+  #   print("Invalid number of coordinates, must be multiple of 5")
+  #   return
 
   # gather page numbers on which to draw bounding boxes
   # table is a dictionary with keys : page #s, and values : list of bounding boxes
@@ -231,6 +238,8 @@ def final_output(pdf_name, bounding_boxes):
     image_path_out = IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".png"
     # pass in list of bounding boxes for each page
     draw_bounding_box(image_path_in,table[i],image_path_out)
+  print("drew bounding boxes!")
+
 
   # Done 3: merge the rendered images to the pdf, save to /pdf_out
   with open(pdf_in, 'rb') as file:
@@ -245,35 +254,28 @@ def final_output(pdf_name, bounding_boxes):
         else:
           output.add_page(page)
       output.write(pdf_out)
+    
+    s3.upload_file(file_name=pdf_out, bucket=OUTPUT_BUCKET)
+    print(f"merged final pdf, uploaded {pdf_out} to {OUTPUT_BUCKET}")
 
 print("Finished final_output")
 
-def parse_tree_similarity(yolo_crop_path, query_path):
+def parse_tree_similarity(yolo_result, query_path):
   """
-  yolo_crop_path : path to the cropped images which YOLO created from downloaded PDF
+  yolo_result : list of tuples (np array of image bytes, page num)
   query_path : path to the query image which was downloaded from S3
   """
   # rem is list containing all formatting elements we want to remove
   rem = ["\mathrm{", "\mathcal{", "\\text{"]
 
   # Run Rapid LaTeX OCR on all images in the directory + query
-  query_text = image_to_latex_convert(query_path)
+  query_text = image_to_latex_convert(query_path, query_bool=True)
 
   # Store string repr. of LaTeX equation and its page number in list
   equations_list = []
-  for file in os.listdir(yolo_crop_path):
-    filename = os.fsdecode(file)
-    img_path = os.path.join(yolo_crop_path, filename)
-    
-    # extract page # from filename and, store num. of the equation
-    # i.e. eqn_num is 1 if its the first equation on the page, and 2 if its second equation etc.
-    page_num = filename[:(filename.index("_"))]
-    eqn_num = filename[(filename.index("__"))+2:(-4)]
-    if eqn_num == "":
-      eqn_num = 1
-    
+  for dict_elem, page_num in yolo_result:
     # Run rapid latex OCR on the image of the equation: returns String LaTeX
-    latex_string = image_to_latex_convert(img_path)
+    latex_string = image_to_latex_convert(dict_elem, query_bool=False)
 
     # remove formatting elements from latex_string
     #print(f"pre {latex_string}")
@@ -338,7 +340,7 @@ def lambda_handler(event, context):
 
           ## CALL TO SAGEMAKER TO RUN YOLO
           sm_client = boto3.client(service_name="sagemaker")
-          ENDPOINT_NAME = "mathsearch-yolov8-production-v1" # TODO change name of endpoint
+          ENDPOINT_NAME = "mathsearch-yolov8-production-v1"
           endpoint_created = False
           # start_time = time.time()
           response = sm_client.list_endpoints()
@@ -359,7 +361,7 @@ def lambda_handler(event, context):
                             deserializer=JSONDeserializer())
 
           print("Sending to Sagemaker...")
-          result = []
+          yolo_result = []
           os.chdir(png_converted_pdf_path+"_"+ pdf_name)
           for file in os.listdir(png_pdf_path):
             print(f"Processing {file}")
@@ -374,24 +376,24 @@ def lambda_handler(event, context):
             payload = cv2.imencode('.jpg', resized_image)[1].tobytes()
 
             page_num = file.split(".")[0]
-            result.append((predictor.predict(payload), page_num))
+            yolo_result.append((predictor.predict(payload), page_num))
             #infer_end_time = time.time()
             #print(f"Inference Time = {infer_end_time - infer_start_time:0.4f} seconds")
 
           print("Sagemaker results received!")
 
-          for dict_elem, page_num in result:
-            count = 1
-            for elem in dict_elem["cropped_ims"]:
-              np_elem = np.array(elem).astype(np.uint8)
-              img = Image.fromarray(np_elem)
-              if count == 1: 
-                img.save(+str(page_num)+"__.jpg")
-              else:
-                img.save(yolo_crops_path+str(page_num)+"__"+str(count)+".jpg")
-              count += 1
+          # for dict_elem, page_num in result:
+          #   count = 1
+          #   for elem in dict_elem["cropped_ims"]:
+          #     np_elem = np.array(elem).astype(np.uint8)
+          #     img = Image.fromarray(np_elem)
+          #     if count == 1: 
+          #       img.save(yolo_crops_path+str(page_num)+"__.jpg")
+          #     else:
+          #       img.save(yolo_crops_path+str(page_num)+"__"+str(count)+".jpg")
+          #     count += 1
 
-          top5_eqns = parse_tree_similarity(yolo_crop_path=yolo_crops_path, query_path=local_target)
+          top5_eqns = parse_tree_similarity(yolo_result=yolo_result, query_path=local_target)
           print("tree similarity generated!")
 
           page_nums_5 = [page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
@@ -401,7 +403,7 @@ def lambda_handler(event, context):
           # dict_elem["boxes"] for each element in result
           bboxes = []
           bbox_render = ""
-          for dict_elem, page_num in result:
+          for dict_elem, page_num in yolo_result:
             # only collect bounding boxes from top 5 equations
             if page_num not in page_nums_5:
               continue
