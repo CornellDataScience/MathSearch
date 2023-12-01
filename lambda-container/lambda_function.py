@@ -1,7 +1,9 @@
+from constants import *
+import os
+print("Starting imports")
 import boto3
 import json
 import dataHandler
-from constants import *
 import urllib3
 import subprocess
 import os
@@ -17,12 +19,11 @@ import time
 import numpy as np
 from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
+import traceback
+print("Ending imports")
 
 # Initialize S3 client
 s3 = boto3.client('s3')
-
-handler = dataHandler.DataHandler()
-http = urllib3.PoolManager()
 
 # Add an extra backslash to any of the string elements which are in python list escape
 def escape_chars(latex_src):
@@ -36,6 +37,8 @@ def escape_chars(latex_src):
         latex_src = latex_src[:str_index]+"\\"+latex_src[str_index+1:]
         str_index += 1
     str_index += 1
+
+print("Finished escape_chars")
 
 # latex_src is string of LaTeX source code to pre-process
 # rem is string with formatting element to remove. Include opening brace. ex. \mathrm{
@@ -66,8 +69,9 @@ def preprocess_latex(latex_src, rem):
 
     final_string = final_string[:format_index]+final_string[format_index+len(rem):closing_brace]+final_string[closing_brace+1:]
     format_index = final_string.find(rem)
-
+  
   return final_string
+print("Finished preprocess_latex")
 
 # Parses sympy expression into Zss tree
 def sympy_to_zss(expr):
@@ -82,6 +86,8 @@ def sympy_to_zss(expr):
             node.addkid(child_node)
     return node
 
+print("Finished sympy_to_zss")
+
 # Input is string of LaTeX source code. Runs sympy parser and ZSS tree parser.
 # Returns parsed ZSS tree.
 def source_to_zss(latex_expr):
@@ -91,19 +97,23 @@ def source_to_zss(latex_expr):
         return zss_tree
     except:
         return Node("ERROR")
+
+print("Finished source_to_zss")
         
 # used in ZSS tree edit distance
 def custom_edit_distance(query_tree, other_tree):
     return distance(query_tree, other_tree, get_children=Node.get_children,
         insert_cost=lambda node: 10, remove_cost=lambda node: 10, update_cost=lambda a, b: 1)
 
+print("Finished custom_edit_distance")
+
 # Returns string which has LaTeX source code
 def image_to_latex_convert(path):
-    # TODO might not be the right path!!
-    image_resizer_path = "ocr-models/image_resizer.onnx"
-    encoder_path = "ocr-models/encoder.onnx"
-    decoder_path = "ocr-models/decoder.onnx"
-    tokenizer_json = "ocr-models/tokenizer.json"
+    ocr_model_dir = os.environ["LAMBDA_TASK_ROOT"]
+    image_resizer_path = f"{ocr_model_dir}/ocr-models/image_resizer.onnx"
+    encoder_path = f"{ocr_model_dir}/ocr-models/encoder.onnx"
+    decoder_path = f"{ocr_model_dir}/ocr-models/decoder.onnx"
+    tokenizer_json = f"{ocr_model_dir}/ocr-models/tokenizer.json"
 
     model = LatexOCR(image_resizer_path=image_resizer_path,
                 encoder_path=encoder_path,
@@ -114,6 +124,8 @@ def image_to_latex_convert(path):
     result, elapse = model(data)
     return result
 
+print("Finished image_to_latex_convert")
+
 def downloadDirectoryFroms3(bucketName, remoteDirectoryName):
     s3_resource = boto3.resource('s3')
     bucket = s3_resource.Bucket(bucketName) 
@@ -121,6 +133,8 @@ def downloadDirectoryFroms3(bucketName, remoteDirectoryName):
         if not os.path.exists(os.path.dirname(obj.key)):
             os.makedirs(os.path.dirname(obj.key))
         bucket.download_file(obj.key, obj.key) # save to same path
+
+print("Finished downloadDirectoryFroms3")
 
 def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucket_path):
     """
@@ -153,37 +167,41 @@ def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucke
     # return paths to the pdf and query that we downloaded
     return local_pdf, f"{png_converted_pdf_path}_{pdf_name}", local_target
 
+print("Finished download_files")
+
 # Call draw_bounding_box on each PNG page of PDF
 def draw_bounding_box(image_path_in, bounding_boxes, image_path_out):
-	""""
-	image_path_in : path to PNG which represents page from pdf
-	bounding_boxes: 
-	"""
-	image = Image.open(image_path_in).convert('RGB')
-	draw = ImageDraw.Draw(image)
-	width, height = image.size
-	SKYBLUE = (55,161,253)
+  """"
+  image_path_in : path to PNG which represents page from pdf
+  bounding_boxes: 
+  """
+  image = Image.open(image_path_in).convert('RGB')
+  draw = ImageDraw.Draw(image)
+  width, height = image.size
+  SKYBLUE = (55,161,253)
 
-	# create rectangle for each bounding box on this page
-	for bb in bounding_boxes:
-		x, y, w, h = bb
-		x1 = int((x - w/2) * width)
-		y1 = int((y - h/2) * height)
-		x2 = int((x + w/2) * width)
-		y2 = int((y + h/2) * height)
-		draw.rectangle(xy=(x1, y1, x2, y2), outline=SKYBLUE, width=6)
-	
-	# save img as pdf
-	image.save(image_path_out[:-4]+".pdf")
+  # create rectangle for each bounding box on this page
+  for bb in bounding_boxes:
+    x, y, w, h = bb
+    x1 = int((x - w/2) * width)
+    y1 = int((y - h/2) * height)
+    x2 = int((x + w/2) * width)
+    y2 = int((y + h/2) * height)
+    draw.rectangle(xy=(x1, y1, x2, y2), outline=SKYBLUE, width=6)
+  
+  # save img as pdf
+  image.save(image_path_out[:-4]+".pdf")
+
+print("Finished draw_bounding_box")
 
 def final_output(pdf_name, bounding_boxes):
-  IMG_IN_DIR = f"converted_pdfs_{pdf_name}/"
-  IMG_OUT_DIR = "img_out/"
+  IMG_IN_DIR = f"/tmp/converted_pdfs_{pdf_name}/"
+  IMG_OUT_DIR = "/tmp/img_out/"
   subprocess.run(["rm", "-rf", IMG_OUT_DIR])
   subprocess.run(["mkdir", "-p", IMG_OUT_DIR])
   
-  PDF_IN_DIR = "pdfs_from_bucket/"
-  PDF_OUT_DIR = "pdf_out/"
+  PDF_IN_DIR = "/tmp/pdfs_from_bucket/"
+  PDF_OUT_DIR = "/tmp/pdf_out/"
   subprocess.run(["rm", "-rf", PDF_OUT_DIR])
   subprocess.run(["mkdir", "-p", PDF_OUT_DIR])
 
@@ -228,7 +246,9 @@ def final_output(pdf_name, bounding_boxes):
           output.add_page(page)
       output.write(pdf_out)
 
-def parse_tree_similarity (yolo_crop_path, query_path):
+print("Finished final_output")
+
+def parse_tree_similarity(yolo_crop_path, query_path):
   """
   yolo_crop_path : path to the cropped images which YOLO created from downloaded PDF
   query_path : path to the query image which was downloaded from S3
@@ -281,135 +301,140 @@ def parse_tree_similarity (yolo_crop_path, query_path):
   sorted(tree_dists, key=lambda x: x[1])
   return tree_dists[:5]
 
+print("Finished parse_tree_similarity")
+
 def lambda_handler(event, context):
-    try:
-        handler = dataHandler.DataHandler()
-        objects = handler.list_s3_objects("mathsearch-intermediary")
+  try:
+      print("Running backend...")
+      handler = dataHandler.DataHandler()
+      objects = handler.list_s3_objects("mathsearch-intermediary")
 
-        body = json.loads(event['Records'][0]['body'])
-        receipt_handle = event['Records'][0]['receiptHandle']
-        file = body['Records'][0]['s3']['object']['key']
-        print("File name: ", file)
+      body = json.loads(event['Records'][0]['body'])
+      receipt_handle = event['Records'][0]['receiptHandle']
+      file = body['Records'][0]['s3']['object']['key']
+      print("File name: ", file)
 
-        uuid = handler.extract_uuid(file)
-        expected_image = f'{uuid}_image'
+      uuid = handler.extract_uuid(file)
+      expected_image = f'{uuid}_image'
 
-        if handler.is_expected_image_present(objects, expected_image):
-            print('Found image, run ML model')
-        
-            # clear tmp folder before running the ML model
-            subprocess.call('rm -rf /tmp/*', shell=True)
+      if handler.is_expected_image_present(objects, expected_image):
+          print('Found image, run ML model')
+      
+          # clear tmp folder before running the ML model
+          subprocess.call('rm -rf /tmp/*', shell=True)
 
-            # folders which we download S3 bucket PDF to
-            png_converted_pdf_path = "converted_pdfs"
-            pdfs_from_bucket_path = "pdfs_from_bucket"
-        
-            # create the pdfs_from_bucket directory if it doesn't exist
-            subprocess.run(f'mkdir -p {pdfs_from_bucket_path}', shell=True, cwd="/tmp")
-        
-            pdf_name = uuid+"_pdf"
-            query_name = uuid+"_image"
-            local_pdf, png_pdf_path, local_target = download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucket_path)
-  
-            ## CALL TO SAGEMAKER TO RUN YOLO
-            sm_client = boto3.client(service_name="sagemaker")
-            ENDPOINT_NAME = "temporary" # TODO change name of endpoint
-            endpoint_created = False
-            start_time = time.time()
-            while time.time()-start_time < 300:
-                response = sm_client.list_endpoints()
-                for ep in response['Endpoints']:
-                    print(f"Endpoint Status = {ep['EndpointStatus']}")
-                    if ep['EndpointName']==ENDPOINT_NAME and ep['EndpointStatus']=='InService':
-                        endpoint_created = True
-                        break
-                if endpoint_created:
-                    break
-                time.sleep(5)
-            # return error if endpoint not created successfully
-            if not endpoint_created:
-              return {
-                'statusCode': 400,
-                'body': json.dumps('Error with Sagemaker Endpoint'),
-                'error': str("Error with Sagemaker Endpoint")
-              }
+          # folders which we download S3 bucket PDF to
+          png_converted_pdf_path = "/tmp/converted_pdfs"
+          pdfs_from_bucket_path = "/tmp/pdfs_from_bucket"
+          yolo_crops_path = "/tmp/crops/"
 
-            predictor = PyTorchPredictor(endpoint_name=ENDPOINT_NAME,
-                             deserializer=JSONDeserializer())
+          # create the pdfs_from_bucket directory if it doesn't exist
+          subprocess.run(f'mkdir -p {pdfs_from_bucket_path}', shell=True, cwd="/tmp")
+          subprocess.run(f'mkdir -p {yolo_crops_path}', shell=True, cwd="/tmp")
 
-            result = []
-            for file in os.listdir(png_pdf_path):
-              #infer_start_time = time.time()
-              orig_image = cv2.imxread(file)
-              #image_height, image_width, _ = orig_image.shape
-              model_height, model_width = 640, 640
-              # x_ratio = image_width/model_width
-              # y_ratio = image_height/model_height
+          pdf_name = uuid+"_pdf"
+          query_name = uuid+"_image"
+          local_pdf, png_pdf_path, local_target = download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucket_path)
 
-              resized_image = cv2.resize(orig_image, (model_height, model_width))
-              payload = cv2.imencode('.jpg', resized_image)[1].tobytes()
+          ## CALL TO SAGEMAKER TO RUN YOLO
+          sm_client = boto3.client(service_name="sagemaker")
+          ENDPOINT_NAME = "mathsearch-yolov8-production-v1" # TODO change name of endpoint
+          endpoint_created = False
+          # start_time = time.time()
+          response = sm_client.list_endpoints()
+          for ep in response['Endpoints']:
+              print(f"Endpoint Status = {ep['EndpointStatus']}")
+              if ep['EndpointName']==ENDPOINT_NAME and ep['EndpointStatus']=='InService':
+                  endpoint_created = True
 
-              page_num = file.split(".")[0]
-              result.append(predictor.predict(payload), page_num)
-              #infer_end_time = time.time()
-              #print(f"Inference Time = {infer_end_time - infer_start_time:0.4f} seconds")
+          # return error if endpoint not created successfully
+          if not endpoint_created:
+            return {
+              'statusCode': 400,
+              'body': json.dumps('Error with Sagemaker Endpoint'),
+              'error': str("Error with Sagemaker Endpoint")
+            }
 
-            yolo_crops_path = "/tmp/crops/"
-            for dict_elem, page_num in result:
-              count = 1
-              for byte_str in dict_elem["cropped_ims"]:
-                jpg_original = np.load(byte_str, allow_pickle=True)
-                # jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
-                # img = cv2.imdecode(jpg_as_np, flags=-1)
-                img = Image.fromarray(jpg_original)
-                if count == 1: 
-                  img.save(yolo_crops_path+page_num+"__.jpg")
-                else:
-                  img.save(yolo_crops_path+page_num+"__"+count+".jpg")
-                count += 1
+          predictor = PyTorchPredictor(endpoint_name=ENDPOINT_NAME,
+                            deserializer=JSONDeserializer())
 
-            top5_eqns = parse_tree_similarity(yolo_crop_path=yolo_crops_path, query_path=local_target)
-            print("tree similarity generated!")
-  
-            page_nums_5 = [page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
-            eqns_info = [(page_num, eqn_num) for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
+          print("Sending to Sagemaker...")
+          result = []
+          os.chdir(png_converted_pdf_path+"_"+ pdf_name)
+          for file in os.listdir(png_pdf_path):
+            print(f"Processing {file}")
+            #infer_start_time = time.time()
+            orig_image = cv2.imread(file)
+            #image_height, image_width, _ = orig_image.shape
+            model_height, model_width = 640, 640
+            # x_ratio = image_width/model_width
+            # y_ratio = image_height/model_height
 
-            # get bboxes for top5 equations
-            # dict_elem["boxes"] for each element in result
-            bboxes = []
-            bbox_render = ""
-            for dict_elem, page_num in result:
-              # only collect bounding boxes from top 5 equations
-              if page_num not in page_nums_5:
-                continue
+            resized_image = cv2.resize(orig_image, (model_height, model_width))
+            payload = cv2.imencode('.jpg', resized_image)[1].tobytes()
 
-              count = 1
-              for bboxes in dict_elem["boxes"]:
-                if (page_num, count) in eqns_info:
-                  bbox_render += page_num + " " + " ".join(str(b) for b in bboxes[:4]) + " "
-                  bboxes.append((page_num, bboxes[:4]))
-             
-            # return JSON with the following keys
-            # id: UIUD
-            # pdf : path / pdf name
-            # pages : list of page numbers sorted in order of most to least similar to query []
-            # bbox: list of tuples (page_num, [list of equation label + four coordinates of bounding box])
-            json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
-                          "id": uuid, "pdf": pdf_name, "page_nums": page_nums_5, "bbox": bboxes}
-              
-            # draws the bounding boxes for the top 5 equations and converts pages back to PDF
-            # final PDF with bounding boxes saved in directory pdf_out
-            final_output(pdf_name, bbox_render)
+            page_num = file.split(".")[0]
+            result.append((predictor.predict(payload), page_num))
+            #infer_end_time = time.time()
+            #print(f"Inference Time = {infer_end_time - infer_start_time:0.4f} seconds")
 
-            #print(json_result)
-        
-        # Dequeue
-        handler.delete_sqs_message(QUEUE_URL, receipt_handle)
-        return json_result
+          print("Sagemaker results received!")
+
+          for dict_elem, page_num in result:
+            count = 1
+            for elem in dict_elem["cropped_ims"]:
+              np_elem = np.array(elem).astype(np.uint8)
+              img = Image.fromarray(np_elem)
+              if count == 1: 
+                img.save(+str(page_num)+"__.jpg")
+              else:
+                img.save(yolo_crops_path+str(page_num)+"__"+str(count)+".jpg")
+              count += 1
+
+          top5_eqns = parse_tree_similarity(yolo_crop_path=yolo_crops_path, query_path=local_target)
+          print("tree similarity generated!")
+
+          page_nums_5 = [page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
+          eqns_info = [(page_num, eqn_num) for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
+
+          # get bboxes for top5 equations
+          # dict_elem["boxes"] for each element in result
+          bboxes = []
+          bbox_render = ""
+          for dict_elem, page_num in result:
+            # only collect bounding boxes from top 5 equations
+            if page_num not in page_nums_5:
+              continue
+
+            count = 1
+            for bboxes in dict_elem["boxes"]:
+              if (page_num, count) in eqns_info:
+                bbox_render += page_num + " " + " ".join(str(b) for b in bboxes[:4]) + " "
+                bboxes.append((page_num, bboxes[:4]))
+            
+          # return JSON with the following keys
+          # id: UUID
+          # pdf : path / pdf name
+          # pages : list of page numbers sorted in order of most to least similar to query []
+          # bbox: list of tuples (page_num, [list of equation label + four coordinates of bounding box])
+          json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
+                        "id": uuid, "pdf": pdf_name, "pages": page_nums_5, "bbox": bboxes}
+            
+          # draws the bounding boxes for the top 5 equations and converts pages back to PDF
+          # final PDF with bounding boxes saved in directory pdf_out
+          final_output(pdf_name, bbox_render)
+
+          #print(json_result)
+      
+      # Dequeue
+      handler.delete_sqs_message(QUEUE_URL, receipt_handle)
+      return json_result
        
-    except Exception as e:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Error processing the document'),
-            'error': str(e)
-        }
+  except:
+    exception = traceback.format_exc()
+    print(f"Error: {exception}")
+    return {
+        'statusCode': 400,
+        'body': json.dumps(f'Error processing the document.'),
+        'error': exception
+    }

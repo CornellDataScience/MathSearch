@@ -7,7 +7,7 @@ import urllib3
 
 class DataHandler():
     def __init__(self):
-        self.clients = [boto3.client('sqs'), boto3.client('s3')]
+        self.clients = [boto3.client('sqs', region_name='us-east-1'), boto3.client('s3')]
         self.http = urllib3.PoolManager()
     
     def list_s3_objects(self, bucket_name):
@@ -19,7 +19,7 @@ class DataHandler():
         return file_name[7:-4]
     
     def delete_sqs_message(self, queue_url, receipt_handle):
-        sqs = boto3.client('sqs')
+        sqs = self.clients[0]
         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
         
     def is_expected_image_present(self, objects, expected_image):
