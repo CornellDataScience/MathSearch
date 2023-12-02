@@ -358,13 +358,16 @@ def lambda_handler(event, context):
           yolo_result = []
           os.chdir(png_converted_pdf_path+"_"+ pdf_name)
           for file in os.listdir(png_pdf_path):
+            # don't need to run LaTeX OCR on query.png
+            if file == "query.png": continue
+
             print(f"Processing {file}")
             #infer_start_time = time.time()
             orig_image = cv2.imread(file)
             model_height, model_width = 640, 640
 
             resized_image = cv2.resize(orig_image, (model_height, model_width))
-            payload = cv2.imencode('.jpg', resized_image)[1].tobytes()
+            payload = cv2.imencode('.png', resized_image)[1].tobytes()
 
             page_num = file.split(".")[0]
             yolo_result.append((predictor.predict(payload), page_num))
@@ -378,7 +381,7 @@ def lambda_handler(event, context):
           top5_eqns = parse_tree_similarity(yolo_result=yolo_result, query_path=local_target)
           print("LaTeX OCR ran, and tree similarity generated!")
 
-          page_nums_5 = [page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
+          page_nums_5 = sorted([page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns])
           top_5_eqns_info = [(page_num, eqn_num) for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
 
           # get bboxes for top5 equations
@@ -403,8 +406,9 @@ def lambda_handler(event, context):
           # pdf : path / pdf name
           # pages : list of page numbers sorted in order of most to least similar to query []
           # bbox: list of tuples (page_num, [list of equation label + four coordinates of bounding box])
+          pages = sorted(page_nums_5)
           json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
-                        "id": uuid, "pdf": pdf_name, "pages": page_nums_5, "bbox": bboxes}
+                        "id": uuid, "pdf": pdf_name, "pages": pages, "bbox": bboxes}
             
           # draws the bounding boxes for the top 5 equations and converts pages back to PDF
           # final PDF with bounding boxes saved in directory pdf_out
