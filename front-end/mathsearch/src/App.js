@@ -32,7 +32,7 @@ function App() {
           {/*  <Route exact path='/' element={<Component />} /> */}
           <Route exact path='/' element={<Home />} />
           {/* <Route exact path='/returnpage' element={<ReturnPage selectedFile={selectedFile} />} /> */}
-          <Route path='/results/:requestid' element={<Results />} />
+          <Route path='/results/:uuid' element={<Results />} />
           <Route path='/about' element={<About />} />
         </Routes>
       </Router>
