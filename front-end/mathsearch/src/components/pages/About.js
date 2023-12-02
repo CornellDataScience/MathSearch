@@ -12,44 +12,47 @@ function About() {
   return (
     <>
       <div style={{ backgroundColor: "#eeeeee", minHeight: "100vh" }}>
-        <div style={{ height: "100vh" }}>
-          <NavBar />
-          <div
-            style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "50px" }}
-          >
-            <div>
-              <p>Current team members:</p>
-              <ul>
-                <li>Andrea Siby</li>
-                <li>Cade Jin</li>
-                <li>Deniz BT</li>
-                <li>Emerald Liu</li>
-                <li>Jason Zheng</li>
-                <li>Jerry Chen</li>
-                <li>Katie Zelvin</li>
-                <li>Pun Chalxanien</li>
-                <li>Travis Zhang</li>
-              </ul>
-              <p>Past team members: (SP23)</p>
-              <ul>
-                <li>Alice Um</li>
-                <li>Darren Key</li>
-                <li>Johann Lee</li>
-              </ul>
-              <p>Past team members: (FA22)</p>
-              <ul>
-                <li>Alexander Wang</li>
-                <li>Derek Lee</li>
-                <li>Felix Hohne</li>
-                <li>Kaitlyn Chen</li>
-                <li>Laura Gong</li>
-                <li>Mason Bulling</li>
-                <li>Ronin Sharma</li>
-                <li>Ryan Lee</li>
-                <li>Varun Gande</li>
-                <li>Vivian Chen</li>
-              </ul>
-            </div>
+        <NavBar />
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "50px",
+          }}
+        >
+          <div>
+            <p>Current team members:</p>
+            <ul>
+              <li>Andrea Siby</li>
+              <li>Cade Jin</li>
+              <li>Deniz BT</li>
+              <li>Emerald Liu</li>
+              <li>Jason Zheng</li>
+              <li>Jerry Chen</li>
+              <li>Katie Zelvin</li>
+              <li>Pun Chalxanien</li>
+              <li>Travis Zhang</li>
+            </ul>
+            <p>Past team members: (SP23)</p>
+            <ul>
+              <li>Alice Um</li>
+              <li>Darren Key</li>
+              <li>Johann Lee</li>
+            </ul>
+            <p>Past team members: (FA22)</p>
+            <ul>
+              <li>Alexander Wang</li>
+              <li>Derek Lee</li>
+              <li>Felix Hohne</li>
+              <li>Kaitlyn Chen</li>
+              <li>Laura Gong</li>
+              <li>Mason Bulling</li>
+              <li>Ronin Sharma</li>
+              <li>Ryan Lee</li>
+              <li>Varun Gande</li>
+              <li>Vivian Chen</li>
+            </ul>
           </div>
         </div>
       </div>

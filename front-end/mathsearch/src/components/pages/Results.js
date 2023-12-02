@@ -164,11 +164,11 @@ const Results = () => {
           </div>
         </div>
       ) : (
-        <>
+        <div style={{backgroundColor: "#eeeeee"}}>
           <NavBar />
           {/* <button onClick={handleTestClick}>Test</button> */}
           {pdf !== null && pages && (
-            <div style={{ background: "lightgray" }}>
+            <div>
               <br />
               <div className="grid-container">
                 {/* Empty column */}
@@ -222,7 +222,7 @@ const Results = () => {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </>
   );
