@@ -6,6 +6,14 @@ import { useLocation, useParams } from "react-router-dom";
 import { CognitoIdentityCredentials } from "aws-sdk/global";
 import AWS from "aws-sdk";
 
+import { pdfjs } from 'react-pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url,
+).toString();
+
+
 /* BEGIN AWS CONSTANTS */
 
 // Constants for Amazon Cognito Identity Pool
