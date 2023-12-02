@@ -49,8 +49,8 @@ const Results = () => {
         region: REGION,
       });
 
-      const fileKey = uuid + "_pdf";
-      const jsonKey = uuid + "_json";
+      const fileKey = uuid + ".pdf";
+      const jsonKey = uuid + "_results.json";
 
       console.log(S3_OUTPUT_BUCKET);
 
