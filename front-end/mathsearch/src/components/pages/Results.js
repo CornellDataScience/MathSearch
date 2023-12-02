@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
+import { Document, Page, pdfjs } from "react-pdf/dist/esm/entry.webpack5";
 import "./Results.css";
 import NavBar from "../NavBar.js";
 import { useLocation, useParams } from "react-router-dom";
