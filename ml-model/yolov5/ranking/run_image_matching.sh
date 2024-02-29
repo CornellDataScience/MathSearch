@@ -1,1 +1,0 @@
-python ./ranking/ImageMatching.py 
