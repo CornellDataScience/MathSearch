@@ -7,6 +7,9 @@ import AWS from "aws-sdk";
 import { v4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
+import Alert from '@mui/material/Alert';
+import CheckIcon from '@mui/icons-material/Check';
+
 
 function updatePreview() {
   let rawtext = document.getElementById("MathInput").value;
@@ -53,6 +56,7 @@ function LaTeXInput() {
   const [focus, setFocus] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState({ isError: false, message: "" });
 
   /** Convert some text to a url which is an image */
   const convert_text_to_image_url = (text) => {
@@ -126,9 +130,36 @@ function LaTeXInput() {
 
   /** Handles when the user clicks the Search button */
   const handleClick = async () => {
+    // Reset the error state at the beginning of each submission attempt
+    setError({ isError: false, message: "" });
+
+    // Ensure there's a file selected and the text is not empty before proceeding
+    if (!selectedFile) {
+      setError({ isError: true, message: "No file selected for upload." });
+      return; // Stop execution if no file is selected
+    }
+
+    if (text.trim() === "") {
+      setError({ isError: true, message: "Text input cannot be empty." });
+      return; // Stop execution if text input is empty
+    }
+
+    // No need to check for existing errors here as we reset them at the start
+    // and we have already checked for all input-related errors above
+
+    // If no errors, proceed with upload
     uploadRequest(selectedFile, text);
-    navigate(`/results/${uuid}`)
+
+    // Consider the asynchronous nature of uploadRequest
+    // Ensure it signals success before navigating
+    // This pseudocode assumes uploadRequest is adjusted to return a Promise
+    uploadRequest(selectedFile, text)
+    navigate(`/results/${uuid}`);
+
+    setError({ isError: false, message: "" });
+    ;
   };
+
 
   /** Handles when user types in the search bar */
   const handleChange = async (event) => {
@@ -145,9 +176,24 @@ function LaTeXInput() {
     setFocus(false);
   };
 
-  /** When user uploads a file */
   const handleFileInput = (e) => {
-    setSelectedFile(e.target.files[0]);
+    const file = e.target.files[0];
+
+    // Check if the file is a PDF by looking at its MIME type
+    if (file && file.type === "application/pdf") {
+      console.log("PDF file selected:", file);
+      setSelectedFile(file);
+      // Ensure any previous error state is cleared upon successful file selection
+      setError({ isError: false, message: "" });
+    } else {
+      console.log("Invalid file type. Please select a PDF.");
+      // Optionally, clear the selected file input if it's not a PDF
+      e.target.value = "";
+      // And set the selected file in your state to null
+      setSelectedFile(null);
+      // Update the error state with an appropriate message
+      setError({ isError: true, message: "Invalid file type. Please select a PDF." });
+    }
   };
 
   return (
@@ -214,6 +260,15 @@ function LaTeXInput() {
             onChange={handleFileInput}
           />
         </div>
+
+        {error.isError && (
+          <Alert icon={<CheckIcon fontSize="inherit" />} severity="error">
+            {error.message}
+          </Alert>
+        )}
+
+
+
       </div>
     </>
   );

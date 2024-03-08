@@ -5,7 +5,6 @@ import NavBar from '../NavBar.js';
 import 'bootstrap/dist/js/bootstrap.min.js';
 import 'bootstrap/dist/css/bootstrap.css';
 
-import UploadPDFToS3WithNativeSdk from '../UploadPDFToS3WithNativeSdk.js';
 import LaTeXInput from '../LaTeXInput.js';
 
 import '../../App.css';

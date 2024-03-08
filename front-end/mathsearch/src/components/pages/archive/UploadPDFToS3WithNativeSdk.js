@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CognitoIdentityCredentials } from 'aws-sdk/global';
 import AWS from 'aws-sdk';
 import { v4 } from 'uuid';
-import { get_image } from './LaTeXInput';
+import { get_image } from '../../LaTeXInput';
 
 // Constants for Amazon Cognito Identity Pool
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID
