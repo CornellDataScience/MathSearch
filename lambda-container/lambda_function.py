@@ -21,6 +21,7 @@ from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
+import io
 print("Ending imports")
 
 # Initialize S3 client
@@ -73,6 +74,7 @@ def preprocess_latex(latex_src, rem):
     format_index = final_string.find(rem)
   
   return final_string
+
 print("Finished preprocess_latex")
 
 # Parses sympy expression into Zss tree
@@ -109,8 +111,10 @@ def custom_edit_distance(query_tree, other_tree):
 
 print("Finished custom_edit_distance")
 
-# Returns a well-formatted LaTeX string represent the equation image at the path 'image_jpg_path'
-def image_to_latex_convert(image_jpg_path):
+# Returns a well-formatted LaTeX string represent the equation image 'image'
+# 'image' should be the string path to a jpg image if 'query_bool' is true
+# 'image' should represent a numpy or non-numpy array of image bytes if 'query_bool' is false
+def image_to_latex_convert(image, query_bool):
     
     #Hardcoded CDS account response headers (placeholders for now)
     headers = {
@@ -127,7 +131,7 @@ def image_to_latex_convert(image_jpg_path):
     }
 
     response = requests.post("https://api.mathpix.com/v3/text",
-                                files={"file": open(image_jpg_path,"rb").read()},
+                                files={"file": open(image,"rb").read() if query_bool else io.BufferedReader(io.BytesIO(image))},
                                 data={"options_json": json.dumps(data)},
                                 headers=headers)
        
@@ -274,12 +278,7 @@ def parse_tree_similarity(yolo_result, query_path):
   query_text = []
   for filename in os.listdir(query_path):
     if filename.endswith('.jpg'):
-        query_text.append(image_to_latex_convert(os.path.join(query_path, filename)))
-
-  """
-  Previously:
-  query_text = image_to_latex_convert(query_path, query_bool = true)
-  """
+        query_text.append(image_to_latex_convert(os.path.join(query_path, filename), query_bool=True))
 
   # Store string repr. of LaTeX equation and its page number in list
   equations_list = []
