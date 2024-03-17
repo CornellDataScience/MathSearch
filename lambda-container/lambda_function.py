@@ -20,6 +20,7 @@ import numpy as np
 from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
+import requests
 print("Ending imports")
 
 # Initialize S3 client
@@ -108,29 +109,37 @@ def custom_edit_distance(query_tree, other_tree):
 
 print("Finished custom_edit_distance")
 
-# Returns string which has LaTeX source code
-def image_to_latex_convert(path, query_bool):
-    ocr_model_dir = os.environ["LAMBDA_TASK_ROOT"]
-    image_resizer_path = f"{ocr_model_dir}/ocr-models/image_resizer.onnx"
-    encoder_path = f"{ocr_model_dir}/ocr-models/encoder.onnx"
-    decoder_path = f"{ocr_model_dir}/ocr-models/decoder.onnx"
-    tokenizer_json = f"{ocr_model_dir}/ocr-models/tokenizer.json"
+# Returns a well-formatted LaTeX string represent the equation image at the path 'image_jpg_path'
+def image_to_latex_convert(image_jpg_path):
+    
+    #Hardcoded CDS account response headers (placeholders for now)
+    headers = {
+      "app_id": "CDS_mathsearch-mathpix-test",
+      "app_key": "71e46420dcdbad2cdd86d7cb119d2075c8de8ce107350be8cdc8518d49dc2d6d"
+    }
+    
+    # Declare api request payload (refer to https://docs.mathpix.com/?python#introduction for description)
+    data = {
+        "formats": ["latex_styled"], 
+        "rm_fonts": True, 
+        "rm_spaces": False,
+        "idiomatic_braces": True
+    }
 
-    model = LatexOCR(image_resizer_path=image_resizer_path,
-                encoder_path=encoder_path,
-                decoder_path=decoder_path,
-                tokenizer_json=tokenizer_json)
-    
-    # if query_bool, then path is a path to query image; 
-    if query_bool:
-      with open(path, "rb") as f:
-          data = f.read()
-      result, elapse = model(data)
+    response = requests.post("https://api.mathpix.com/v3/text",
+                                files={"file": open(image_jpg_path,"rb").read()},
+                                data={"options_json": json.dumps(data)},
+                                headers=headers)
+       
+    # Check if the request was successful
+    if response.status_code == 200:
+        response_data = response.json()
+        #print(json.dumps(response_data, indent=4, sort_keys=True))  # Print formatted JSON response
+        #print()
+        return response_data.get("latex_styled", "")  # Get the LaTeX representation from the response, safely access the key
     else:
-      result, elapse = model(path)
-      print("Latex OCR decoded YOLO image as byte array successfully!")
-    
-    return result
+        print("Failed to get LaTeX on API call. Status code:", response.status_code)
+        return ""
 
 print("Finished image_to_latex_convert")
 
@@ -261,8 +270,16 @@ def parse_tree_similarity(yolo_result, query_path):
   # rem is list containing all formatting elements we want to remove
   rem = ["\mathrm{", "\mathcal{", "\\text{"]
 
-  # Run Rapid LaTeX OCR on all images in the directory + query
-  query_text = image_to_latex_convert(query_path, query_bool=True)
+  # Run Rapid LaTeX OCR on all images in the directory, appending the results to string array query_text
+  query_text = []
+  for filename in os.listdir(query_path):
+    if filename.endswith('.jpg'):
+        query_text.append(image_to_latex_convert(os.path.join(query_path, filename)))
+
+  """
+  Previously:
+  query_text = image_to_latex_convert(query_path, query_bool = true)
+  """
 
   # Store string repr. of LaTeX equation and its page number in list
   equations_list = []
