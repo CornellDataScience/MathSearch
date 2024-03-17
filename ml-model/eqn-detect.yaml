@@ -6,5 +6,5 @@ test:  # test images (optional)
 
 # Classes
 names:
-  0: inline-eqn
-  1: big-eqn
+  0: big-eqn
+  1: inline-eqn

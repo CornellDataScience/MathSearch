@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import os
 
 # Load a model
-model = YOLO('runs/detect/train2/weights/best.pt')  # load custom equation model
+model = YOLO('runs/detect/train/weights/best.pt')  # load custom equation model
 print("Loaded YOLO model!")
 img_directory = 'datasets/eqn-images-dataset/images/train'
 
