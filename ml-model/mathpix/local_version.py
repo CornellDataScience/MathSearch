@@ -151,14 +151,16 @@ def custom_edit_distance(query_tree, other_tree):
 # Returns parsed ZSS tree.
 def source_to_zss(latex_expr):
     try:
-        print('comparing')
+        print('Started: ' + latex_expr)
         sympy_expr = parse_latex(latex_expr)
+        print('SymPy')
         zss_tree = sympy_to_zss(sympy_expr)
-        print()
-        print(zss_tree)
+        print('ZSS')
+        print(type(zss_tree))
         print()
         return zss_tree
-    except:
+    except Exception as e:  # Catch the base Exception class
+        print(f"An error occurred: {e}")
         return Node("ERROR")
 
 # Returns a well-formatted LaTeX string represent the equation image 'image'
@@ -195,6 +197,8 @@ def image_to_latex_convert(image, query_bool):
         print("Failed to get LaTeX on API call. Status code:", response.status_code)
         return ""
 
+def raw_string(s) : return s.replace('\\', '\\\\') #return s.encode('unicode_escape').decode('ascii') #return r'{}'.format(s)
+
 def parse_tree_similarity(source_path, query_path):
   
   # source_path : path to source directory of images to search
@@ -209,6 +213,7 @@ def parse_tree_similarity(source_path, query_path):
   query_latex = image_to_latex_convert(query_path, query_bool=True)
   for elem in formatting_elements_to_remove :
         query_latex = preprocess_latex(query_latex, elem)
+  query_latex = raw_string(query_latex)
 
   print("#2")
 
@@ -235,7 +240,7 @@ def parse_tree_similarity(source_path, query_path):
   tree_dists = []
   for eqn, filename in source_latex:
     print(filename)
-    zss_tree = source_to_zss(eqn)
+    zss_tree = source_to_zss(raw_string(eqn))
     dist = custom_edit_distance(zss_query, zss_tree)
     tree_dists.append((eqn, dist, filename))
 
@@ -243,7 +248,6 @@ def parse_tree_similarity(source_path, query_path):
 
   # sort equations by second element in tuple i.e. edit_dist_from_query
   # return equations with (top_n-1) smallest edit distances
-  sorted(tree_dists, key=lambda x: x[1])
   return tree_dists
 
 print()
@@ -251,3 +255,4 @@ output = parse_tree_similarity('test-eqn', 'test-query/query.jpg')
 for _, dist, filename in output :
    print(filename + " : " + str(dist))
 print()
+
