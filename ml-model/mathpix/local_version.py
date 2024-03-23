@@ -152,7 +152,7 @@ def custom_edit_distance(query_tree, other_tree):
 def source_to_zss(latex_expr):
     try:
         print('Started: ' + latex_expr)
-        sympy_expr = parse_latex(latex_expr)
+        sympy_expr = parse_latex('latex_expr')
         print('SymPy')
         zss_tree = sympy_to_zss(sympy_expr)
         print('ZSS')
