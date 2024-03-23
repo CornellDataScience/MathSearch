@@ -197,7 +197,7 @@ def image_to_latex_convert(image, query_bool):
         print("Failed to get LaTeX on API call. Status code:", response.status_code)
         return ""
 
-def raw_string(s) : return s.replace('\\', '\\\\') #return s.encode('unicode_escape').decode('ascii') #return r'{}'.format(s)
+def raw_string(s) : return s #return s.encode('unicode_escape').decode('ascii') #return r'{}'.format(s)
 
 def parse_tree_similarity(source_path, query_path):
   
