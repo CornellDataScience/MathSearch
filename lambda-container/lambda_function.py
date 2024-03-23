@@ -10,7 +10,6 @@ import os
 import sympy as sp
 from sympy.parsing.latex import parse_latex
 from zss import Node, distance
-from rapid_latex_ocr import LatexOCR
 import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
@@ -266,52 +265,55 @@ def final_output(pdf_name, bounding_boxes):
 
 print("Finished final_output")
 
-def parse_tree_similarity(yolo_result, query_path):
-  """
-  yolo_result : list of tuples (np array of image bytes, page num)
-  query_path : path to the query image which was downloaded from S3
-  """
-  # rem is list containing all formatting elements we want to remove
-  rem = ["\mathrm{", "\mathcal{", "\\text{"]
-
-  # Run Rapid LaTeX OCR on all images in the directory, appending the results to string array query_text
-  query_text = []
-  for filename in os.listdir(query_path):
-    if filename.endswith('.jpg'):
-        query_text.append(image_to_latex_convert(os.path.join(query_path, filename), query_bool=True))
-
-  # Store string repr. of LaTeX equation and its page number in list
-  equations_list = []
-  for dict_elem, page_num in yolo_result:
-    eqn_num = 1
-    for byte_elem in dict_elem["cropped_ims"]:
-      np_elem = np.array(byte_elem).astype(np.uint8)
-      # Run rapid latex OCR: returns String LaTeX
-      latex_string = image_to_latex_convert(np_elem, query_bool=False)
-
-      # remove formatting elements from latex_string
-      edited_latex_string = latex_string
-      for elem in rem:
-          if query_text.find(elem) == -1:
-            edited_latex_string = preprocess_latex(edited_latex_string, elem)
-      equations_list.append((edited_latex_string, page_num, eqn_num))
-    
-  # create ZSS tree of query  
-  zss_query = source_to_zss(query_text)
+def parse_tree_similarity(source_path, query_path):
   
+  # source_path : path to source directory of images to search
+  # query_path : path to the query image which was downloaded from S3
+  
+  # rem is list containing all formatting elements we want to remove
+  formatting_elements_to_remove = ["\mathrm{", "\mathcal{", "\\text{", "\left", "\right"]
+
+  #print("#1")
+
+  # Get preprocessed LaTeX representation of query
+  query_latex = image_to_latex_convert(query_path, query_bool=True)
+  for elem in formatting_elements_to_remove :
+        query_latex = preprocess_latex(query_latex, elem)
+  query_latex = query_latex
+
+  #print("#2")
+
+  # Get a list of tuples of (LaTeX OCR of image, image filename)
+  source_latex = []
+  for filename in os.listdir(source_path):
+    if filename.endswith('.jpg'):
+        print(filename)
+        latex_string = image_to_latex_convert(os.path.join(source_path, filename), query_bool=True)
+        for elem in formatting_elements_to_remove :
+            latex_string = preprocess_latex(latex_string, elem)
+        source_latex.append( (latex_string, filename) )
+
+  #print("#3")
+
+  # create ZSS tree of the query  
+  zss_query = source_to_zss(query_latex)
+
+  #print("#4")
+
   # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
-  # each element in tree_dist is (latex_string, edit_dist_from_query, page_num, eqn_num)
+  # each element in tree_dist is (latex_string, edit_dist_from_query, filename)
   tree_dists = []
-  for eqn, page_num, eqn_num in equations_list:
+  for eqn, filename in source_latex:
+    print(filename)
     zss_tree = source_to_zss(eqn)
     dist = custom_edit_distance(zss_query, zss_tree)
-    tree_dists.append((eqn, dist, page_num, eqn_num))
+    tree_dists.append((eqn, dist, filename))
+
+  #print("#5")
 
   # sort equations by second element in tuple i.e. edit_dist_from_query
   # return equations with (top_n-1) smallest edit distances
-  top_n = 6 
-  sorted(tree_dists, key=lambda x: x[1])
-  return tree_dists[:top_n]
+  return tree_dists
 
 print("Finished parse_tree_similarity")
 
