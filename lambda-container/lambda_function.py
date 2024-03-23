@@ -4,7 +4,6 @@ print("Starting imports")
 import boto3
 import json
 import dataHandler
-import urllib3
 import subprocess
 import os
 import sympy as sp
@@ -14,32 +13,36 @@ import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
 import cv2
-import time
-import numpy as np
+#import time
+#import numpy as np
 from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
 import io
+from dotenv import load_dotenv, find_dotenv
+
 print("Ending imports")
 
 # Initialize S3 client
 s3 = boto3.client('s3')
 
-# Add an extra backslash to any of the string elements which are in python list escape
-def escape_chars(latex_src):
-  escape_char = ["n", "r", "f", "b", "t"]
-  str_index = 0
-  while str_index < len(latex_src):
-    if latex_src.sub(str_index, str_index+1) == "\\":
-      # check next character
-      if str_index+1 < len(latex_src) and latex_src.sub(str_index+1, str_index+2) in escape_char:
-        # add another slash
-        latex_src = latex_src[:str_index]+"\\"+latex_src[str_index+1:]
-        str_index += 1
-    str_index += 1
+#load_dotenv(find_dotenv())
 
-print("Finished escape_chars")
+# # Add an extra backslash to any of the string elements which are in python list escape
+# def escape_chars(latex_src):
+#   escape_char = ["n", "r", "f", "b", "t"]
+#   str_index = 0
+#   while str_index < len(latex_src):
+#     if latex_src.sub(str_index, str_index+1) == "\\":
+#       # check next character
+#       if str_index+1 < len(latex_src) and latex_src.sub(str_index+1, str_index+2) in escape_char:
+#         # add another slash
+#         latex_src = latex_src[:str_index]+"\\"+latex_src[str_index+1:]
+#         str_index += 1
+#     str_index += 1
+
+# print("Finished escape_chars")
 
 def preprocess_latex(latex_src, rem):
   """
@@ -111,16 +114,14 @@ def custom_edit_distance(query_tree, other_tree):
 print("Finished custom_edit_distance")
 
 # Returns a well-formatted LaTeX string represent the equation image 'image'
-# 'image' should be the string path to a jpg image if 'query_bool' is true
-# 'image' should represent a numpy or non-numpy array of image bytes if 'query_bool' is false
 def image_to_latex_convert(image, query_bool):
-    
-    #Hardcoded CDS account response headers (placeholders for now)
+
+    # Hardcoded CDS account response headers (placeholders for now)
     headers = {
-      "app_id": "CDS_mathsearch-mathpix-test",
-      "app_key": "71e46420dcdbad2cdd86d7cb119d2075c8de8ce107350be8cdc8518d49dc2d6d"
+        "app_id": "mathsearch_ff86f3_059645",
+        "app_key": os.environ.get("APP_KEY")
     }
-    
+      
     # Declare api request payload (refer to https://docs.mathpix.com/?python#introduction for description)
     data = {
         "formats": ["latex_styled"], 
@@ -266,24 +267,18 @@ def final_output(pdf_name, bounding_boxes):
 print("Finished final_output")
 
 def parse_tree_similarity(source_path, query_path):
-  
   # source_path : path to source directory of images to search
   # query_path : path to the query image which was downloaded from S3
   
   # rem is list containing all formatting elements we want to remove
   formatting_elements_to_remove = ["\mathrm{", "\mathcal{", "\\text{", "\left", "\right"]
 
-  #print("#1")
-
   # Get preprocessed LaTeX representation of query
   query_latex = image_to_latex_convert(query_path, query_bool=True)
   for elem in formatting_elements_to_remove :
         query_latex = preprocess_latex(query_latex, elem)
-  query_latex = query_latex
-
-  #print("#2")
-
-  # Get a list of tuples of (LaTeX OCR of image, image filename)
+  
+  # Get a list of tuples of (MathPix OCR text of image, image filename)
   source_latex = []
   for filename in os.listdir(source_path):
     if filename.endswith('.jpg'):

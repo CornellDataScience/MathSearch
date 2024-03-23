@@ -10,8 +10,7 @@ RUN yum -y install poppler-utils
 # Install the specified packages
 RUN pip install -r requirements.txt
 
-# Copy lambda function code and the OCR models
-COPY ocr-models ${LAMBDA_TASK_ROOT}/ocr-models
+# Copy lambda function code
 COPY constants.py ${LAMBDA_TASK_ROOT}
 COPY dataHandler.py ${LAMBDA_TASK_ROOT}
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}
