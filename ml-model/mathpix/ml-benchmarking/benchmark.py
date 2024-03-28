@@ -13,7 +13,7 @@ def create_dataframe(lst_file_path, formulas_list, images_directory):
             formula_idx = int(formula_idx)  # Convert index to integer
             latex = formulas_list[formula_idx]
             image_path = os.path.join(images_directory, image_name + '.png')
-            data.append({'latex': latex, 'image_path': image_path})
+            data.append({'latex_label': latex, 'image_path': image_path})
     return pd.DataFrame(data)
 
 # Load formulas
@@ -21,9 +21,8 @@ with open(formulas_file_path, 'r', newline="\n", encoding='ISO-8859-1') as file:
     formulas = file.readlines()
 formulas_list = [formula.strip() for formula in formulas]  # Remove newline characters
 
-
 print(formulas_list[0])
 # Create DataFrame
-#df = create_dataframe(formulas_file_path, formulas_list, images_directory)
-#print(df.head())
+df = create_dataframe(formulas_file_path, formulas_list, images_directory)
+print(df.head())
 
