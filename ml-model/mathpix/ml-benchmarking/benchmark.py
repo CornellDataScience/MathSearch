@@ -17,11 +17,13 @@ def create_dataframe(lst_file_path, formulas_list, images_directory):
     return pd.DataFrame(data)
 
 # Load formulas
-with open(formulas_file_path, 'r') as file:
+with open(formulas_file_path, 'r', newline="\n", encoding='ISO-8859-1') as file:
     formulas = file.readlines()
 formulas_list = [formula.strip() for formula in formulas]  # Remove newline characters
 
+
+print(formulas_list[0])
 # Create DataFrame
-df = create_dataframe(formulas_file_path, formulas_list, images_directory)
-print(df.head())
+#df = create_dataframe(formulas_file_path, formulas_list, images_directory)
+#print(df.head())
 
