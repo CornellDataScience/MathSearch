@@ -13,36 +13,16 @@ import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
 import cv2
-#import time
-#import numpy as np
 from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
 import io
-from dotenv import load_dotenv, find_dotenv
 
 print("Ending imports")
 
 # Initialize S3 client
 s3 = boto3.client('s3')
-
-#load_dotenv(find_dotenv())
-
-# # Add an extra backslash to any of the string elements which are in python list escape
-# def escape_chars(latex_src):
-#   escape_char = ["n", "r", "f", "b", "t"]
-#   str_index = 0
-#   while str_index < len(latex_src):
-#     if latex_src.sub(str_index, str_index+1) == "\\":
-#       # check next character
-#       if str_index+1 < len(latex_src) and latex_src.sub(str_index+1, str_index+2) in escape_char:
-#         # add another slash
-#         latex_src = latex_src[:str_index]+"\\"+latex_src[str_index+1:]
-#         str_index += 1
-#     str_index += 1
-
-# print("Finished escape_chars")
 
 def preprocess_latex(latex_src, rem):
   """
