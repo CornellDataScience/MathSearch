@@ -5,44 +5,20 @@ from zss import Node, distance
 import sympy as sp
 from sympy.parsing.latex import parse_latex
 
-def preprocess_latex(latex_src):
-  # Get preprocessed LaTeX representation of query
-  formatting_elements_to_remove = []
-  for elem in formatting_elements_to_remove :
-     latex_src = preprocess_latex(latex_src, elem)
+# Add an extra backslash to any of the string elements which are in python file escape
+def escape_chars(latex_src):
+  escape_char = ["\n", "\r", "\f", "\b", "\t"]
+  rep_char = ["\\n", "\\r", "\\f", "\\b", "\\t"]
+  for i in range(0, len(escape_char)):
+    latex_src = latex_src.replace(escape_char[i], rep_char[i])
   return latex_src
 
-def remove_expr_from_latex(latex_src, rem):
-  #latex_src: string of LaTeX source code to pre-process
-  #rem: string of formatting element which we want to remove from latex_src. includes opening curly brace. ex. \mathrm{
-  
-  final_string = latex_src
-  format_index = latex_src.find(rem)
-  while format_index != -1:
-    # iterate through string until you find the right closing curly brace to remove
-    index = format_index + len(rem)
-    closing_brace = -1
-    num_opening = 0
-    while index < len(final_string):
-      if final_string[index:index+1] == "{":
-        num_opening += 1
-      elif final_string[index:index+1] == "}":
-        if num_opening == 0:
-          closing_brace = index
-          break
-        else:
-          num_opening -= 1
-      index += 1
-
-    # entering this if statement means something went wrong.
-    # nothing is removed in this case
-    if closing_brace == -1:
-      return final_string
-
-    final_string = final_string[:format_index]+final_string[format_index+len(rem):closing_brace]+final_string[closing_brace+1:]
-    format_index = final_string.find(rem)
-  
-  return final_string    
+def preprocess_latex(latex_src):
+  # Get preprocessed LaTeX representation of query
+  formatting_elements_to_remove = ["\\\\begin{align*}", "\\\\end{align*}"]
+  for elem in formatting_elements_to_remove :
+     latex_src = latex_src.replace(elem, "")
+  return latex_src
 
 # Parses sympy expression into Zss tree
 def sympy_to_zss(expr):
@@ -81,5 +57,7 @@ df = pd.DataFrame(data['train'][:100])
 
 print()
 print("First:")
-source_to_zss(r"A_m = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.")
+input
+print(preprocess_latex(df['latex_formula'][0].replace('\\', '\\\\')))
+source_to_zss("A_m = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.")
 print()
