@@ -57,7 +57,6 @@ df = pd.DataFrame(data['train'][:100])
 
 print()
 print("First:")
-input
 print(preprocess_latex(df['latex_formula'][0].replace('\\', '\\\\')))
 source_to_zss("A_m = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.")
 print()
