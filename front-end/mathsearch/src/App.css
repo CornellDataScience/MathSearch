@@ -76,7 +76,7 @@ body {
 }
 
 .mission-section {
-  background-image: url('../public/images/background.png');
+  background-image: url('../public/background.png');
   background-size: cover;
   display: flex;
   align-items: center;
@@ -167,7 +167,7 @@ li {
 
 
 .features {
-  background-image: url('../public/images/background.png');
+  background-image: url('../public/background.png');
   background-size: cover;
   color: white;
   align-items: center;

@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate } from "react-router-dom";
-import NavBar from '../NavBar.js';
 
 import 'bootstrap/dist/js/bootstrap.min.js';
 import 'bootstrap/dist/css/bootstrap.css';
 
-import LaTeXInput from '../LaTeXInput.js';
 
 import '../../App.css';
 import './Home.css'
 
+import logo from './logo_white.png'; // Ensure the path is correct relative to this script
+
 // App.js
-import React from 'react';
-import './App.css';
 function App() {
   return (
     <div className="App">
@@ -31,7 +28,8 @@ function App() {
 
             </div>
             <div className="mission-image">
-              <img src="/images/my-image.png" alt="Mission Image" />
+              <img src={logo} alt="Mission Image" />
+
             </div>
           </div>
           <section className="problem">
