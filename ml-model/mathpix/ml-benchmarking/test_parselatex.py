@@ -4,13 +4,18 @@ import matplotlib.pyplot as plt
 from zss import Node, distance
 import sympy as sp
 from sympy.parsing.latex import parse_latex
-from sympy.parsing.sympy_parser import (standard_transformations,
-                                        implicit_multiplication_application)
 
-def preprocess_latex(latex_src, rem):
+def preprocess_latex(latex_src):
+  # Get preprocessed LaTeX representation of query
+  formatting_elements_to_remove = []
+  for elem in formatting_elements_to_remove :
+     latex_src = preprocess_latex(latex_src, elem)
+  return latex_src
 
+def remove_expr_from_latex(latex_src, rem):
   #latex_src: string of LaTeX source code to pre-process
   #rem: string of formatting element which we want to remove from latex_src. includes opening curly brace. ex. \mathrm{
+  
   final_string = latex_src
   format_index = latex_src.find(rem)
   while format_index != -1:
@@ -37,7 +42,7 @@ def preprocess_latex(latex_src, rem):
     final_string = final_string[:format_index]+final_string[format_index+len(rem):closing_brace]+final_string[closing_brace+1:]
     format_index = final_string.find(rem)
   
-  return final_string
+  return final_string    
 
 # Parses sympy expression into Zss tree
 def sympy_to_zss(expr):
@@ -52,13 +57,14 @@ def sympy_to_zss(expr):
             node.addkid(child_node)
     return node
 
-
 # Input is string of LaTeX source code. Runs sympy parser and ZSS tree parser.
 # Returns parsed ZSS tree.
 def source_to_zss(latex_expr):
-    sympy_expr = parse_latex(r"J*"+latex_expr) # r"J"+ is only nescessary when the input eq doesn't include a variable
+    sympy_expr = parse_latex(latex_expr) # r"J"+ is only nescessary when the input eq doesn't include a variable
+    print()
     print(sympy_expr)
     zss_tree = sympy_to_zss(sympy_expr)
+    print()
     print(zss_tree)
     return zss_tree
 
@@ -75,5 +81,5 @@ df = pd.DataFrame(data['train'][:100])
 
 print()
 print("First:")
-source_to_zss(df['latex_formula'][0])
+source_to_zss(r"A_m = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.")
 print()
