@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
-//import MathInput from './Canvas.js';
+
 
 function updatePreview() {
   let rawtext = document.getElementById("MathInput").value;
@@ -236,11 +236,6 @@ function LaTeXInput() {
               </button>
             )}
           </div>
-
-          <div>
-            {/* <MathInput /> */}
-          </div>
-
 
           {/* Math output preview */}
           <div style={{ position: "relative", paddingTop: 1 }}>
