@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from zss import Node, distance
 import sympy as sp
 from sympy.parsing.latex import parse_latex
+from sympy.parsing.sympy_parser import (standard_transformations,
+                                        implicit_multiplication_application)
 
 def preprocess_latex(latex_src, rem):
 
@@ -50,11 +52,14 @@ def sympy_to_zss(expr):
             node.addkid(child_node)
     return node
 
+
 # Input is string of LaTeX source code. Runs sympy parser and ZSS tree parser.
 # Returns parsed ZSS tree.
 def source_to_zss(latex_expr):
     sympy_expr = parse_latex(latex_expr)
+    print(sympy_expr)
     zss_tree = sympy_to_zss(sympy_expr)
+    print(zss_tree)
     return zss_tree
 
 def show_image(image):
@@ -69,9 +74,6 @@ df = pd.DataFrame(data['train'][:100])
 # print(df['latex_formula'][0]) # string
 
 print()
-print(df['latex_formula'][0])
-print(source_to_zss(df['latex_formula'][0]))
-print()
-print(df['latex_formula'][1])
-print(source_to_zss(df['latex_formula'][1]))
+print("First:")
+source_to_zss(r"\frac{1}{2} = 2")
 print()
