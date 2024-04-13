@@ -56,7 +56,7 @@ def sympy_to_zss(expr):
 # Input is string of LaTeX source code. Runs sympy parser and ZSS tree parser.
 # Returns parsed ZSS tree.
 def source_to_zss(latex_expr):
-    sympy_expr = parse_latex(latex_expr)
+    sympy_expr = parse_latex(r"J*"+latex_expr) # r"J"+ is only nescessary when the input eq doesn't include a variable
     print(sympy_expr)
     zss_tree = sympy_to_zss(sympy_expr)
     print(zss_tree)
@@ -75,5 +75,5 @@ df = pd.DataFrame(data['train'][:100])
 
 print()
 print("First:")
-source_to_zss(r"\frac{1}{2} = 2")
+source_to_zss(df['latex_formula'][0])
 print()
