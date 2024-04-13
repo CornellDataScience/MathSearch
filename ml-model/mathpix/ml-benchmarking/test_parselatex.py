@@ -53,13 +53,8 @@ def sympy_to_zss(expr):
 # Input is string of LaTeX source code. Runs sympy parser and ZSS tree parser.
 # Returns parsed ZSS tree.
 def source_to_zss(latex_expr):
-    print('Started: ' + latex_expr)
-    sympy_expr = parse_latex('latex_expr')
-    print('SymPy')
+    sympy_expr = parse_latex(latex_expr)
     zss_tree = sympy_to_zss(sympy_expr)
-    print('ZSS')
-    print(type(zss_tree))
-    print()
     return zss_tree
 
 def show_image(image):
@@ -73,4 +68,10 @@ df = pd.DataFrame(data['train'][:100])
 # show_image(df['image'][0]) # <class 'PIL.JpegImagePlugin.JpegImageFile'>
 # print(df['latex_formula'][0]) # string
 
-print(source_to_zss(r"4"))
+print()
+print(df['latex_formula'][0])
+print(source_to_zss(df['latex_formula'][0]))
+print()
+print(df['latex_formula'][1])
+print(source_to_zss(df['latex_formula'][1]))
+print()
