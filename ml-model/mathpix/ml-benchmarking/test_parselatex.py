@@ -5,6 +5,14 @@ from zss import Node, distance
 import sympy as sp
 from sympy.parsing.latex import parse_latex
 
+# Add an extra backslash to any of the string elements which are in python file escape
+def escape_chars(latex_src):
+  escape_char = ["\n", "\r", "\f", "\b", "\t"]
+  rep_char = ["\\n", "\\r", "\\f", "\\b", "\\t"]
+  for i in range(0, len(escape_char)):
+    latex_src = latex_src.replace(escape_char[i], rep_char[i])
+  return latex_src
+
 def preprocess_latex(latex_src):
   # Get preprocessed LaTeX representation of query
   formatting_elements_to_remove = ["\\begin{align*}", "\\end{align*}"]
@@ -49,14 +57,14 @@ df = pd.DataFrame(data['train'][:100])
 # print(df['latex_formula'][0]) # string
 
 print()
-input = r"\begin{align*} \frac{A_m}{n} = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.\end{align*}"
-preprocessed = preprocess_latex(input)
+input = "\begin{align*} \frac{A_m}{n} = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.\end{align*}"
+preprocessed = preprocess_latex(escape_chars(input))
 zss_1 = source_to_zss(preprocessed)
 print(preprocessed)
 print(zss_1)
 print()
-input = r"\begin{align*} \frac{A_m}{n} = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.\end{align*}"
-preprocessed = preprocess_latex(input)
+input = "\begin{align*} \frac{A_m}{n} = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.\end{align*}"
+preprocessed = preprocess_latex(escape_chars(input))
 zss_2 = source_to_zss(preprocessed)
 print(preprocessed)
 print(zss_2)
