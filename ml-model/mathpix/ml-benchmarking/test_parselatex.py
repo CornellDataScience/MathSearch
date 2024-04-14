@@ -91,8 +91,13 @@ df = pd.DataFrame(data['train'][:100])
 # show_image(df['image'][0]) # <class 'PIL.JpegImagePlugin.JpegImageFile'>
 # print(df['latex_formula'][0]) # string
 
+
+
 print("Started")
 zss_trees = []
+
+
+
 count = 0
 for input in df['latex_formula'] :
    preprocessed = preprocess_latex(escape_chars(input))
@@ -104,6 +109,7 @@ for input in df['latex_formula'] :
       print(count)
       print(preprocessed)
       print()
+      break
 print("Finished")
 
 """
