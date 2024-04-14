@@ -13,13 +13,47 @@ def escape_chars(latex_src):
     latex_src = latex_src.replace(escape_char[i], rep_char[i])
   return latex_src
 
-def preprocess_latex(latex_src): 
   # Get preprocessed LaTeX representation of query
-  formatting_elements_to_remove = ["\\begin{align*}", "\\end{align*}"]
-  for elem in formatting_elements_to_remove :
+def preprocess_latex(latex_src): 
+  
+  self_contained_elemeents_to_remove = ["\\begin{align*}", "\\end{align*}", '\\left', '\\right']
+  for elem in self_contained_elemeents_to_remove :
      latex_src = latex_src.replace(elem, "")
+  
+  wrapper_elements_to_remove = ["\\mathrm{", "\\mathcal{", "\\text{"]
+  for elem in wrapper_elements_to_remove :
+     latex_src = remove_wrapper(latex_src, elem)
+
   return latex_src
  
+def remove_wrapper(latex_src, rem):
+  final_string = latex_src
+  format_index = latex_src.find(rem)
+  while format_index != -1:
+    # iterate through string until you find the right closing curly brace to remove
+    index = format_index + len(rem)
+    closing_brace = -1
+    num_opening = 0
+    while index < len(final_string):
+      if final_string[index:index+1] == "{":
+        num_opening += 1
+      elif final_string[index:index+1] == "}":
+        if num_opening == 0:
+          closing_brace = index
+          break
+        else:
+          num_opening -= 1
+      index += 1
+
+    # entering this if statement means something went wrong.
+    # nothing is removed in this case
+    if closing_brace == -1:
+      return final_string
+
+    final_string = final_string[:format_index]+final_string[format_index+len(rem):closing_brace]+final_string[closing_brace+1:]
+    format_index = final_string.find(rem)
+  
+  return final_string
 
 # Parses sympy expression into Zss tree
 def sympy_to_zss(expr):
@@ -57,14 +91,29 @@ df = pd.DataFrame(data['train'][:100])
 # show_image(df['image'][0]) # <class 'PIL.JpegImagePlugin.JpegImageFile'>
 # print(df['latex_formula'][0]) # string
 
+print("Started")
+zss_trees = []
+count = 0
+for input in df['latex_formula'] :
+   preprocessed = preprocess_latex(escape_chars(input))
+   try :
+      zss_trees.append(source_to_zss(preprocess_latex))
+   except:
+      print()
+      count += 1
+      print(count)
+      print(preprocessed)
+      print()
+print("Finished")
+
+"""
 print()
-input = "\begin{align*} \frac{A_m}{n} = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.\end{align*}"
+input = df['latex_formula'][0]
 preprocessed = preprocess_latex(escape_chars(input))
 zss_1 = source_to_zss(preprocessed)
 print(preprocessed)
 print(zss_1)
 print()
-input = "\begin{align*} \frac{A_m}{n} = 1+m+(1-(-1)^m)\kappa_1 + 2\kappa_2.\end{align*}"
 preprocessed = preprocess_latex(escape_chars(input))
 zss_2 = source_to_zss(preprocessed)
 print(preprocessed)
@@ -72,3 +121,4 @@ print(zss_2)
 print()
 print(custom_edit_distance(zss_1,zss_2))
 print()
+"""
