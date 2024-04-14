@@ -13,12 +13,13 @@ def escape_chars(latex_src):
     latex_src = latex_src.replace(escape_char[i], rep_char[i])
   return latex_src
 
-def preprocess_latex(latex_src):
+def preprocess_latex(latex_src): 
   # Get preprocessed LaTeX representation of query
   formatting_elements_to_remove = ["\\begin{align*}", "\\end{align*}"]
   for elem in formatting_elements_to_remove :
      latex_src = latex_src.replace(elem, "")
   return latex_src
+ 
 
 # Parses sympy expression into Zss tree
 def sympy_to_zss(expr):
