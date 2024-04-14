@@ -16,7 +16,7 @@ def escape_chars(latex_src):
   # Get preprocessed LaTeX representation of query
 def preprocess_latex(latex_src): 
   
-  self_contained_elemeents_to_remove = ["\\begin{align*}", "\\end{align*}", '\\left', '\\right', "\\big", "\\Big"]
+  self_contained_elemeents_to_remove = ["&", "\\begin{align*}", "\\end{align*}", '\\left', '\\right', "\\big", "\\Big"]
   for elem in self_contained_elemeents_to_remove :
      latex_src = latex_src.replace(elem, "")
   
@@ -91,12 +91,11 @@ df = pd.DataFrame(data['train'][:100])
 # show_image(df['image'][0]) # <class 'PIL.JpegImagePlugin.JpegImageFile'>
 # print(df['latex_formula'][0]) # string
 
-
-
 print("Started")
 
 zss_trees = []
 count = 0
+"""
 for index, input in enumerate(df['latex_formula']) :
    preprocessed = preprocess_latex(escape_chars(input))
    zss_trees.append(source_to_zss(preprocessed))
@@ -104,15 +103,21 @@ for index, input in enumerate(df['latex_formula']) :
    print(index)
    print(preprocessed)
    print()
-   """
-   try :
-      zss_trees.append(source_to_zss(preprocessed))
-   except:
-      print()
-      count += 1
-      print(count)
-      print(preprocessed)
-    """
+"""
+
+# We've learned that a comma in a subscript breaks parse_latex
+# However commas in superscripts are fine
+# This is bizarre but we should be able to deal with it,
+
+input = df['latex_formula'][2]
+print(input)
+preprocessed = preprocess_latex(escape_chars(input))
+
+print(preprocessed)
+print()
+zss_trees.append(source_to_zss(preprocessed))
+print()
+print()
 
 print("Finished")
 
