@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import '../../App.css';
 import './Home.css'
+import NavBar from '../NavBar.js';
 
 import logo from './logo_white.png'; // Ensure the path is correct relative to this script
 
@@ -13,8 +14,9 @@ import logo from './logo_white.png'; // Ensure the path is correct relative to t
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-      </header>
+      <NavBar />
+
+
       <body>
         <main className="App-main">
 
@@ -93,6 +95,7 @@ function App() {
               <section className="member column">
                 <ul className="team-list">
                   <b>Current team members:</b>
+                  <li>Jake Silver</li>
                   <li>Andrea Siby</li>
                   <li>Cade Jin</li>
                   <li>Deniz BT</li>
