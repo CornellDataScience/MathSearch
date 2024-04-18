@@ -35,6 +35,7 @@
     "react-scripts": "5.0.1",
     "react-upload-to-s3": "^1.0.12",
     "svg2pdf": "^1.1.1",
+    "svg2pdf.js": "^2.2.3",
     "uuid": "^9.0.0",
     "web-vitals": "^2.1.4"
   },
