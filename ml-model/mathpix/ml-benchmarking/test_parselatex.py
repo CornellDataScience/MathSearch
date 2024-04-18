@@ -29,7 +29,7 @@ def preprocess_latex(latex_src):
     for elem in wrapper_elements_to_remove:
         latex_src = remove_wrapper(latex_src, elem)
 
-    return latex_src
+    return latex_src.replace(",", "\,")
 
 
 def remove_wrapper(latex_src, rem):
@@ -126,15 +126,16 @@ for index, input in enumerate(df['latex_formula']) :
 # However commas in superscripts are fine
 # This is bizarre but we should be able to deal with it,
 
-input = df['latex_formula'][2]
+input = r"A_{x\,y}" # df['latex_formula'][2]
+print()
 print(input)
 preprocessed = preprocess_latex(escape_chars(input))
-
+print()
 print(preprocessed)
 print()
 zss_trees.append(source_to_zss(preprocessed))
 print()
-print()
+print(zss_trees)
 
 print("Finished")
 
