@@ -9,6 +9,9 @@ import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
+import { jsPDF } from 'jspdf'
+import 'svg2pdf.js';
+
 //import MathInput from './Canvas.js';
 
 function updatePreview() {
@@ -19,19 +22,6 @@ function updatePreview() {
   );
 }
 
-function get_image() {
-  var tex = document.getElementById("MathInput").value;
-  var url =
-    "http://chart.apis.google.com/chart?&cht=tx&chl=" +
-    encodeURIComponent(tex) +
-    "&chof=png";
-  return url;
-}
-
-function log_image() {
-  let url = get_image();
-  console.log(url);
-}
 
 /* BEGIN AWS CONSTANTS */
 
@@ -58,74 +48,99 @@ function LaTeXInput() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState({ isError: false, message: "" });
 
-  /** Convert some text to a url which is an image */
-  const convert_text_to_image_url = (text) => {
-    var url =
-      "http://chart.apis.google.com/chart?&cht=tx&chl=" +
-      encodeURIComponent(text) +
-      "&chof=png";
-    return url;
-  };
 
-  /** Uploads a PDF file and text query to S3 */
-  const uploadRequest = (file, text) => {
-    AWS.config.credentials.get((err) => {
-      if (err) {
-        console.log("Error retrieving credentials: ", err);
-        return;
-      }
 
-      const myBucket = new AWS.S3({
-        params: { Bucket: S3_INPUT_BUCKET },
-        region: REGION,
-      });
+  /** Function to upload SVG as PDF and another PDF file to S3 */
+  /** Function to upload SVG as PDF and another PDF file to S3 */
+  const uploadRequest = async (file, text) => {
+    const s3 = new AWS.S3();
+    const fileKey = "inputs/" + uuid + "_pdf";
+    const convertedPDFKey = "inputs/" + uuid + "_image";
 
-      const fileKey = "inputs/" + uuid + "_pdf";
-      const imageKey = "inputs/" + uuid + "_image";
-      const imageURL = convert_text_to_image_url(text);
+    try {
+      // console.log('S3_INPUT_BUCKET');
+      // Fetch SVG from URL
+      fetch(`https://math.vercel.app/?from=${text}`, { mode: 'no-cors' })
+        .then(response => response.text()) // Get SVG content as text
+        .then(svg => {
+          //console.log("SVG Data:", svg);  // Check if SVG data looks correct
 
-      console.log(S3_INPUT_BUCKET);
+          const doc = new jsPDF({
+            orientation: 'landscape',  // Set orientation to landscape if needed
+            unit: 'pt',
+            format: 'a4'
+          });
 
-      // Fetch image and upload to S3 input bucket
-      fetch(imageURL)
-        .then((response) => response.blob())
-        .then((blob) => {
-          const imageParams = {
+          const element = document.createElement('div');  // Create a container for the SVG
+          element.innerHTML = svg;  // Insert SVG into the container
+          document.body.appendChild(element);  // Append container to body to render SVG
+
+          const svgElement = element.querySelector('svg');  // Get the SVG element
+          document.body.removeChild(element);
+
+          const width = svgElement.viewBox.baseVal.width;  // Get original width from SVG
+          const height = svgElement.viewBox.baseVal.height;  // Get original height from SVG
+          const scaleFactor = 0.5;  // Scale factor for medium size (adjust as needed)
+
+          // Calculate scaled width and height maintaining the aspect ratio
+          const scaledWidth = width * scaleFactor;
+          const scaledHeight = height * scaleFactor;
+
+          // Generate PDF from the SVG at specified position and size
+          doc.svg(svgElement, {
+            x: 72,  // X position in the PDF (1 inch from the left)
+            y: 72,  // Y position in the PDF (1 inch from the top)
+            width: scaledWidth,
+            height: scaledHeight,
+            loadExternalStyleSheets: true  // Set true to load external styles if your SVG uses them
+          })
+        }).then((pdfBlob) => {
+
+          //doc.save('blob').then(pdfBlob => {
+          // Save the PDF as a Blob
+          const convertedPDFParams = {
             ACL: "public-read",
-            Body: blob,
+            Body: pdfBlob,
             Bucket: S3_INPUT_BUCKET,
-            Key: imageKey,
+            Key: convertedPDFKey,
           };
 
-          myBucket
-            .putObject(imageParams)
-            .on("httpUploadProgress", (evt) => {
-              setProgress(Math.round((evt.loaded / evt.total) * 100));
-            })
-            .send((err) => {
-              if (err) console.log(err);
-            });
+          // Upload the converted PDF to S3
+          s3.upload(convertedPDFParams, (err, data) => {
+            if (err) {
+              console.error('Error uploading converted PDF: ', err);
+              return;
+            }
+            console.log('Successfully uploaded converted PDF:', data.Location);
+          });
+          //})
+          //.catch(error => {
+          //console.error('Error fetching or converting SVG:', error);
+          // });
         })
 
-        // Upload PDF to S3 input bucket
-        .then(() => {
-          const pdfParams = {
-            ACL: "public-read",
-            Body: file,
-            Bucket: S3_INPUT_BUCKET,
-            Key: fileKey,
-          };
 
-          myBucket
-            .putObject(pdfParams)
-            .on("httpUploadProgress", (evt) => {
-              setProgress(Math.round((evt.loaded / evt.total) * 100));
-            })
-            .send((err) => {
-              if (err) console.log(err);
-            });
-        });
-    });
+
+      // Parameters for existing PDF upload
+      const existingPDFParams = {
+        ACL: "public-read",
+        Body: file,
+        Bucket: S3_INPUT_BUCKET,
+        Key: fileKey,
+      };
+
+      // Upload existing PDF to S3
+      s3.upload(existingPDFParams, function (err, data) {
+        if (err) {
+          console.error('Error uploading existing PDF:', err);
+        } else {
+          console.log('Successfully uploaded existing PDF:', data.Location);
+        }
+      });
+
+    } catch (error) {
+      console.error('Error in processing or uploading file:', error);
+    }
   };
 
   /** Handles when the user clicks the Search button */
@@ -148,12 +163,10 @@ function LaTeXInput() {
     // and we have already checked for all input-related errors above
 
     // If no errors, proceed with upload
-    uploadRequest(selectedFile, text);
+    await uploadRequest(selectedFile, text);
 
-    // Consider the asynchronous nature of uploadRequest
-    // Ensure it signals success before navigating
-    // This pseudocode assumes uploadRequest is adjusted to return a Promise
-    uploadRequest(selectedFile, text)
+    //await new Promise(resolve => setTimeout(resolve, 2000));
+
     navigate(`/results/${uuid}`);
 
     setError({ isError: false, message: "" });
@@ -280,4 +293,79 @@ function LaTeXInput() {
 }
 
 export default LaTeXInput;
-export { get_image };
+
+
+/** Function to upload SVG as PDF and another PDF file to S3
+const uploadRequest = async (file, text) => {
+  const s3 = new AWS.S3();
+  const fileKey = "inputs/" + uuid + "_pdf";
+  const convertedPDFKey = "inputs/" + uuid + "_image";
+
+  // console.log('S3_INPUT_BUCKET');
+  // Fetch SVG from URL
+  fetch(`/api/latex/?from=${text}`)
+    .then(response => response.text()) // Get SVG content as text
+    .then(svg => {
+      //console.log("SVG Data:", svg);  // Check if SVG data looks correct
+
+      const doc = new jsPDF({
+        orientation: 'landscape',  // Set orientation to landscape if needed
+        unit: 'pt',
+        format: 'a4'
+      });
+
+      const element = document.createElement('div');  // Create a container for the SVG
+      element.innerHTML = svg;  // Insert SVG into the container
+      document.body.appendChild(element);  // Append container to body to render SVG
+
+      const svgElement = element.querySelector('svg');  // Get the SVG element
+
+      if (svgElement) {
+        const width = svgElement.viewBox.baseVal.width;  // Get original width from SVG
+        const height = svgElement.viewBox.baseVal.height;  // Get original height from SVG
+        const scaleFactor = 0.5;  // Scale factor for medium size (adjust as needed)
+
+        // Calculate scaled width and height maintaining the aspect ratio
+        const scaledWidth = width * scaleFactor;
+        const scaledHeight = height * scaleFactor;
+
+        // Generate PDF from the SVG at specified position and size
+        doc.svg(svgElement, {
+          x: 72,  // X position in the PDF (1 inch from the left)
+          y: 72,  // Y position in the PDF (1 inch from the top)
+          width: scaledWidth,
+          height: scaledHeight,
+          loadExternalStyleSheets: true  // Set true to load external styles if your SVG uses them
+        }).then((pdfBlob) => {
+
+          //doc.save('blob').then(pdfBlob => {
+          // Save the PDF as a Blob
+          const convertedPDFParams = {
+            ACL: "public-read",
+            Body: pdfBlob,
+            Bucket: S3_INPUT_BUCKET,
+            Key: convertedPDFKey,
+          };
+
+          // Upload the converted PDF to S3
+          s3.upload(convertedPDFParams, (err, data) => {
+            if (err) {
+              console.error('Error uploading converted PDF: ', err);
+              return;
+            }
+            console.log('Successfully uploaded converted PDF:', data.Location);
+          });
+          //})
+          //.catch(error => {
+          //console.error('Error fetching or converting SVG:', error);
+          // });
+          document.body.removeChild(element);
+        })
+
+      } else {
+        console.error('SVG element not found');
+      }
+      return
+    })
+
+*/
