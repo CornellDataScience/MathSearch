@@ -58,6 +58,8 @@ function LaTeXInput() {
     const convertedPDFKey = "inputs/" + uuid + "_image";
 
     try {
+
+      /*
       // console.log('S3_INPUT_BUCKET');
       // Fetch SVG from URL
       fetch(`https://math.vercel.app/?from=${text}`, { mode: 'no-cors' })
@@ -94,7 +96,10 @@ function LaTeXInput() {
             height: scaledHeight,
             loadExternalStyleSheets: true  // Set true to load external styles if your SVG uses them
           })
-        }).then((pdfBlob) => {
+        })*/
+
+      console.log("TODO")
+        .then((pdfBlob) => {
 
           //doc.save('blob').then(pdfBlob => {
           // Save the PDF as a Blob
