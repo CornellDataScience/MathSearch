@@ -100,7 +100,7 @@ def show_image(image):
     plt.axis('off')
     plt.show()
 
-
+# Dataset: https://huggingface.co/datasets/OleehyO/latex-formulas
 data = load_dataset("OleehyO/latex-formulas",
                     "cleaned_formulas", trust_remote_code=True)
 df = pd.DataFrame(data['train'][:100])
@@ -110,7 +110,6 @@ df = pd.DataFrame(data['train'][:100])
 
 print("Started")
 
-zss_trees = []
 count = 0
 """
 for index, input in enumerate(df['latex_formula']) :
@@ -126,17 +125,17 @@ for index, input in enumerate(df['latex_formula']) :
 # However commas in superscripts are fine
 # This is bizarre but we should be able to deal with it,
 
-input = r"A_{x\,y}" # df['latex_formula'][2]
+input = r"A_{x,y} = 9*x/y" # df['latex_formula'][2]
 print()
 print(input)
 preprocessed = preprocess_latex(escape_chars(input))
 print()
 print(preprocessed)
 print()
-zss_trees.append(source_to_zss(preprocessed))
+zss_tree = source_to_zss(preprocessed)
 print()
-print(zss_trees)
-
+print(zss_tree)
+print()
 print("Finished")
 
 """
