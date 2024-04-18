@@ -108,13 +108,11 @@ const Results = () => {
 
   useEffect(() => {
     console.log("Component mounted, setting up WebSocket");
-    const ws = new WebSocket(WEBSOCKET_URL);
+    const ws = new WebSocket(`${WEBSOCKET_URL}?uuid=${uuid}`);
 
     ws.onopen = () => {
       console.log('WebSocket Connected');
-      console.log("hi");
       const message = JSON.stringify({ action: "register", uuid: uuid });
-      console.log("bye");
       console.log('Sending message:', message);
       ws.send(message);
     };
