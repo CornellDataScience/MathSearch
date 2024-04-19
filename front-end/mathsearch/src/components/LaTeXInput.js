@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import "katex/dist/katex.min.css";
 import { BlockMath, InlineMath } from "react-katex";
@@ -9,18 +9,6 @@ import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
-import { jsPDF } from 'jspdf'
-import 'svg2pdf.js';
-
-//import MathInput from './Canvas.js';
-
-function updatePreview() {
-  let rawtext = document.getElementById("MathInput").value;
-  ReactDOM.render(
-    <BlockMath math={rawtext} />,
-    document.getElementById("MathPreview")
-  );
-}
 
 
 /* BEGIN AWS CONSTANTS */
@@ -45,107 +33,116 @@ function LaTeXInput() {
   const [text, setText] = useState("");
   const [focus, setFocus] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [progress, setProgress] = useState(0);
   const [error, setError] = useState({ isError: false, message: "" });
 
+  const fetch = require('node-fetch');
+
+  const updatePreview = () => {
+    const rawtext = document.getElementById("MathInput").value;
+    ReactDOM.render(
+      <BlockMath math={rawtext} />,
+      document.getElementById("MathPreview")
+    );
+  };
+
+  function cleanSVG(svgData) {
+    const svgStart = svgData.indexOf('<svg');
+    return svgStart > 0 ? svgData.substring(svgStart) : svgData;
+  }
+
+  function extractViewBox(svgString) {
+    const viewBoxMatch = svgString.match(/viewBox="([^"]+)"/);
+    return viewBoxMatch ? viewBoxMatch[1].split(' ').map(Number) : null;
+  }
+
+  function scaleCanvas(svgString, targetWidth) {
+    const viewBox = extractViewBox(svgString);
+    if (!viewBox) {
+      console.error('No viewBox found in SVG');
+      return { width: targetWidth, height: 200 }; // Default if no viewBox is present
+    }
+
+    const [minX, minY, width, height] = viewBox;
+    const aspectRatio = width / height;
+
+    // Calculate the new height based on the target width and the aspect ratio
+    const scaledHeight = targetWidth / aspectRatio;
+
+    return { width: targetWidth, height: scaledHeight };
+  }
 
 
-  /** Function to upload SVG as PDF and another PDF file to S3 */
+  async function renderLatexToBlob(latexString) {
+    const response = await fetch(`/api/math/?from=${encodeURIComponent(latexString)}`);
+    const svgData = await response.text();
+
+    return new Promise((resolve, reject) => {
+      const cleanedSVG = cleanSVG(svgData); // Ensure your SVG is properly cleaned
+      const dimensions = scaleCanvas(cleanedSVG, 800);
+      const canvas = document.createElement('canvas');
+      canvas.width = dimensions.width;
+      canvas.height = dimensions.height;
+      const ctx = canvas.getContext('2d');
+
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          resolve(blob);  // Now you have a blob that can be uploaded to S3
+        }, 'image/png');
+      };
+      img.onerror = (err) => {
+        reject(new Error('Image loading failed: ' + err));
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanedSVG)));
+    });
+  }
+
+
   /** Function to upload SVG as PDF and another PDF file to S3 */
   const uploadRequest = async (file, text) => {
     const s3 = new AWS.S3();
     const fileKey = "inputs/" + uuid + "_pdf";
     const convertedPDFKey = "inputs/" + uuid + "_image";
 
-    try {
-
-      /*
-      // console.log('S3_INPUT_BUCKET');
-      // Fetch SVG from URL
-      fetch(`https://math.vercel.app/?from=${text}`, { mode: 'no-cors' })
-        .then(response => response.text()) // Get SVG content as text
-        .then(svg => {
-          //console.log("SVG Data:", svg);  // Check if SVG data looks correct
-
-          const doc = new jsPDF({
-            orientation: 'landscape',  // Set orientation to landscape if needed
-            unit: 'pt',
-            format: 'a4'
-          });
-
-          const element = document.createElement('div');  // Create a container for the SVG
-          element.innerHTML = svg;  // Insert SVG into the container
-          document.body.appendChild(element);  // Append container to body to render SVG
-
-          const svgElement = element.querySelector('svg');  // Get the SVG element
-          document.body.removeChild(element);
-
-          const width = svgElement.viewBox.baseVal.width;  // Get original width from SVG
-          const height = svgElement.viewBox.baseVal.height;  // Get original height from SVG
-          const scaleFactor = 0.5;  // Scale factor for medium size (adjust as needed)
-
-          // Calculate scaled width and height maintaining the aspect ratio
-          const scaledWidth = width * scaleFactor;
-          const scaledHeight = height * scaleFactor;
-
-          // Generate PDF from the SVG at specified position and size
-          doc.svg(svgElement, {
-            x: 72,  // X position in the PDF (1 inch from the left)
-            y: 72,  // Y position in the PDF (1 inch from the top)
-            width: scaledWidth,
-            height: scaledHeight,
-            loadExternalStyleSheets: true  // Set true to load external styles if your SVG uses them
-          })
-        })*/
-
-      console.log("TODO")
-        .then((pdfBlob) => {
-
-          //doc.save('blob').then(pdfBlob => {
-          // Save the PDF as a Blob
-          const convertedPDFParams = {
-            ACL: "public-read",
-            Body: pdfBlob,
-            Bucket: S3_INPUT_BUCKET,
-            Key: convertedPDFKey,
-          };
-
-          // Upload the converted PDF to S3
-          s3.upload(convertedPDFParams, (err, data) => {
-            if (err) {
-              console.error('Error uploading converted PDF: ', err);
-              return;
-            }
-            console.log('Successfully uploaded converted PDF:', data.Location);
-          });
-          //})
-          //.catch(error => {
-          //console.error('Error fetching or converting SVG:', error);
-          // });
-        })
+    const imageBuffer = await renderLatexToBlob(text);
 
 
+    const convertedPDFParams = {
+      ACL: "public-read",
+      Body: imageBuffer,
+      Bucket: S3_INPUT_BUCKET,
+      Key: convertedPDFKey,
+    };
 
-      // Parameters for existing PDF upload
-      const existingPDFParams = {
-        ACL: "public-read",
-        Body: file,
-        Bucket: S3_INPUT_BUCKET,
-        Key: fileKey,
-      };
+    // Upload the converted PDF to S3
+    s3.upload(convertedPDFParams, (err, data) => {
+      if (err) {
+        console.error('Error uploading converted PDF: ', err);
+        return;
+      }
+      //console.log('Successfully uploaded converted PDF:', data.Location);
+    });
 
-      // Upload existing PDF to S3
-      s3.upload(existingPDFParams, function (err, data) {
-        if (err) {
-          console.error('Error uploading existing PDF:', err);
-        } else {
-          console.log('Successfully uploaded existing PDF:', data.Location);
-        }
-      });
 
-    } catch (error) {
-      console.error('Error in processing or uploading file:', error);
-    }
+    // Parameters for existing PDF upload
+    const existingPDFParams = {
+      ACL: "public-read",
+      Body: file,
+      Bucket: S3_INPUT_BUCKET,
+      Key: fileKey,
+    };
+
+    // Upload existing PDF to S3
+    s3.upload(existingPDFParams, function (err, data) {
+      if (err) {
+        console.error('Error uploading existing PDF:', err);
+      } else {
+        console.log('Successfully uploaded existing PDF:', data.Location);
+      }
+    });
+
+
   };
 
   /** Handles when the user clicks the Search button */
@@ -219,7 +216,8 @@ function LaTeXInput() {
       <div className="latex-input-container">
         <div className="latex-input-content">
           {/* Math input */}
-          <div className="input-group">
+          <div className="input-group"
+          >
             <textarea
               rows="1"
               className={
@@ -227,7 +225,7 @@ function LaTeXInput() {
                   ? "form-control shadow-none searchbar searchbar-empty"
                   : "form-control shadow-none searchbar searchbar-full"
               }
-              placeholder="Try the Basel Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
+              placeholder="Try the Base Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
               id="MathInput"
               onKeyUp={updatePreview}
               onChange={handleChange}
@@ -261,7 +259,7 @@ function LaTeXInput() {
 
 
           {/* Math output preview */}
-          <div style={{ position: "relative", paddingTop: 1 }}>
+          <div style={{ position: "relative", paddingTop: 1 }} >
             <div style={{ position: "absolute", width: "100%" }}>
               {!focus ? (
                 <div className="output" style={{ display: "none" }}>
@@ -289,88 +287,9 @@ function LaTeXInput() {
             {error.message}
           </Alert>
         )}
-
-
-
       </div>
     </>
   );
 }
 
 export default LaTeXInput;
-
-
-/** Function to upload SVG as PDF and another PDF file to S3
-const uploadRequest = async (file, text) => {
-  const s3 = new AWS.S3();
-  const fileKey = "inputs/" + uuid + "_pdf";
-  const convertedPDFKey = "inputs/" + uuid + "_image";
-
-  // console.log('S3_INPUT_BUCKET');
-  // Fetch SVG from URL
-  fetch(`/api/latex/?from=${text}`)
-    .then(response => response.text()) // Get SVG content as text
-    .then(svg => {
-      //console.log("SVG Data:", svg);  // Check if SVG data looks correct
-
-      const doc = new jsPDF({
-        orientation: 'landscape',  // Set orientation to landscape if needed
-        unit: 'pt',
-        format: 'a4'
-      });
-
-      const element = document.createElement('div');  // Create a container for the SVG
-      element.innerHTML = svg;  // Insert SVG into the container
-      document.body.appendChild(element);  // Append container to body to render SVG
-
-      const svgElement = element.querySelector('svg');  // Get the SVG element
-
-      if (svgElement) {
-        const width = svgElement.viewBox.baseVal.width;  // Get original width from SVG
-        const height = svgElement.viewBox.baseVal.height;  // Get original height from SVG
-        const scaleFactor = 0.5;  // Scale factor for medium size (adjust as needed)
-
-        // Calculate scaled width and height maintaining the aspect ratio
-        const scaledWidth = width * scaleFactor;
-        const scaledHeight = height * scaleFactor;
-
-        // Generate PDF from the SVG at specified position and size
-        doc.svg(svgElement, {
-          x: 72,  // X position in the PDF (1 inch from the left)
-          y: 72,  // Y position in the PDF (1 inch from the top)
-          width: scaledWidth,
-          height: scaledHeight,
-          loadExternalStyleSheets: true  // Set true to load external styles if your SVG uses them
-        }).then((pdfBlob) => {
-
-          //doc.save('blob').then(pdfBlob => {
-          // Save the PDF as a Blob
-          const convertedPDFParams = {
-            ACL: "public-read",
-            Body: pdfBlob,
-            Bucket: S3_INPUT_BUCKET,
-            Key: convertedPDFKey,
-          };
-
-          // Upload the converted PDF to S3
-          s3.upload(convertedPDFParams, (err, data) => {
-            if (err) {
-              console.error('Error uploading converted PDF: ', err);
-              return;
-            }
-            console.log('Successfully uploaded converted PDF:', data.Location);
-          });
-          //})
-          //.catch(error => {
-          //console.error('Error fetching or converting SVG:', error);
-          // });
-          document.body.removeChild(element);
-        })
-
-      } else {
-        console.error('SVG element not found');
-      }
-      return
-    })
-
-*/
