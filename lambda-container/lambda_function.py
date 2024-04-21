@@ -283,7 +283,7 @@ def parse_tree_similarity(yolo_result, query_path):
   # create ZSS tree of query  
   zss_query = source_to_zss(query_text)
   
-  # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
+  # now parse all LaTeX source code into ZSS tree and compute edit distance with query for each equation
   # each element in tree_dist is (latex_string, edit_dist_from_query, page_num, eqn_num)
   tree_dists = []
   for eqn, page_num, eqn_num in equations_list:
