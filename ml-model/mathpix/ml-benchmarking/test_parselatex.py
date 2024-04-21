@@ -17,11 +17,11 @@ def escape_chars(latex_src):
 
     # Get preprocessed LaTeX representation of query
 
-
+# note removing \\ makes the string processable, but then for some of them that lost the \\, they get converted to zss trees w just booleans  
 def preprocess_latex(latex_src):
 
     self_contained_elemeents_to_remove = [
-        "&", "\\begin{align*}", "\\end{align*}", '\\left', '\\right', "\\big", "\\Big"]
+        "&", "\\begin{align*}", "\\end{align*}", '\\left', '\\right', "\\big", "\\Big","\\"] # \\ is line break 
     for elem in self_contained_elemeents_to_remove:
         latex_src = latex_src.replace(elem, "")
 
@@ -109,9 +109,9 @@ df = pd.DataFrame(data['train'][:100])
 # print(df['latex_formula'][0]) # string
 
 print("Started")
-
-count = 0
 """
+count = 0
+zss_trees = []
 for index, input in enumerate(df['latex_formula']) :
    preprocessed = preprocess_latex(escape_chars(input))
    zss_trees.append(source_to_zss(preprocessed))
@@ -125,7 +125,12 @@ for index, input in enumerate(df['latex_formula']) :
 # However commas in superscripts are fine
 # This is bizarre but we should be able to deal with it,
 
-input = r"A_{x,y} = 9*x/y" # df['latex_formula'][2]
+# input = r"A_{x_,y} = 9*x/y" # df['latex_formula'][2]
+
+"""print(df['latex_formula'][2])
+# input = "\begin{align*}&A_{\tilde{i},\tilde{j} }|a}:= \Big\{ \overline{a} \in A_{\tilde{i},\tilde{j}}: \forall p=1, ..., i+j, \overline{a}_p = a_p \Big\}. \end{align*}"
+input = r"A_{{a}|b|}"
+input = r"A_{(a |b)}"
 print()
 print(input)
 preprocessed = preprocess_latex(escape_chars(input))
@@ -134,9 +139,68 @@ print(preprocessed)
 print()
 zss_tree = source_to_zss(preprocessed)
 print()
+print("zss_tre")
 print(zss_tree)
 print()
 print("Finished")
+"""
+
+# new plan:
+# get a subset of the datat that we can parse (gettig rid of edge cases, but still keep track of whats getting tripped up), then try to benchmark on that
+
+# get edge cases and zss_trees
+
+import sys
+from io import StringIO
+
+zss_trees = []
+edge_cases = []
+zss_tree_bool_indexes = []
+for index, input in enumerate(df['latex_formula']) :
+  preprocessed = preprocess_latex(escape_chars(input))
+  try: 
+    # check if it just makes it a boolean
+    captured_output = StringIO()
+    sys.stdout = captured_output
+    # Print the object
+    print(source_to_zss(preprocessed))
+
+    # Reset the stdout
+    sys.stdout = sys.__stdout__
+    printed_string = captured_output.getvalue().strip()
+    if printed_string == "0:BooleanFalse":
+      zss_tree_bool_indexes.append(index)
+    else:
+      zss_trees.append(source_to_zss(preprocessed))
+  except:
+    edge_cases.append(index)
+
+# check for inputs that get converted into boolean valeus
+
+print(zss_tree_bool_indexes)
+print(edge_cases)
+
+
+# print(df['latex_formula'][edge_cases[:5]])
+
+# funciton check error for an equation
+def try_process(input):
+  print()
+  print(input)
+  preprocessed = preprocess_latex(escape_chars(input))
+  print()
+  print(preprocessed)
+  print()
+  zss_tree = source_to_zss(preprocessed)
+  print(zss_tree)
+"""
+print(len(edge_cases))
+try_process(df['latex_formula'][edge_cases[1]])
+
+
+# example of it converting an equation to a boolean and not a zss tree???
+try_process(r"\begin{align*}\nabla_iu=&g^{kl}h_{ik}\nabla_l\Phi, \\ \nabla_i\nabla_ju=&g^{kl}\nabla_kh_{ij}\nabla_l\Phi+\phi'h_{ij}-(h^2)_{ij}u, \end{align*}")
+"""
 
 """
 print()
