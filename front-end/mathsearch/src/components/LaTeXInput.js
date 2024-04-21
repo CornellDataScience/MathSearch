@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
+import MathKeyboard from './MathKeyboard';
+
 
 
 /* BEGIN AWS CONSTANTS */
@@ -34,6 +36,37 @@ function LaTeXInput() {
   const [focus, setFocus] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState({ isError: false, message: "" });
+
+  const [showKeyboard, setShowKeyboard] = useState(false);
+
+  const handleSymbolSelect = (latexSymbol) => {
+    const searchbarElem = document.getElementById("MathInput");
+    const startPos = searchbarElem.selectionStart;
+    const endPos = searchbarElem.selectionEnd;
+    const beforeCursor = text.substring(0, startPos);
+    const afterCursor = text.substring(endPos);
+
+    let insertText = latexSymbol;
+    let cursorPos = startPos + insertText.length;
+
+    if (latexSymbol.includes("{}")) {
+      insertText = insertText.replace("{}", "{ }");
+      cursorPos = startPos + insertText.indexOf("{ ") + 1;
+    }
+
+    const newText = beforeCursor + insertText + afterCursor;
+
+    // Set the new text and ensure the preview is updated after the state is set
+    setText(newText, () => {
+      // focus the searchbar and set the cursor position
+      searchbarElem.focus();
+      searchbarElem.setSelectionRange(cursorPos, cursorPos);
+      // Call updatePreview directly here to ensure it's called after the state update
+      updatePreview(newText);
+    });
+  };
+
+
 
   const fetch = require('node-fetch');
 
@@ -184,11 +217,13 @@ function LaTeXInput() {
   /** When user clicks into the search bar */
   const handleFocus = async (event) => {
     setFocus(true);
+    setShowKeyboard(true);
   };
 
   /** When user clicks out of the search bar */
   const handleBlur = async (event) => {
     setFocus(false);
+    setShowKeyboard(false);
   };
 
   const handleFileInput = (e) => {
@@ -214,10 +249,10 @@ function LaTeXInput() {
   return (
     <>
       <div className="latex-input-container">
+        {/* Start of latex-input-content */}
         <div className="latex-input-content">
           {/* Math input */}
-          <div className="input-group"
-          >
+          <div className="input-group">
             <textarea
               rows="1"
               className={
@@ -232,48 +267,27 @@ function LaTeXInput() {
               onFocus={handleFocus}
               onBlur={handleBlur}
             />
-            {!focus ? (
-              <button
-                onClick={handleClick}
-                className="btn btn-dark"
-                style={{ borderRadius: "0px 30px 30px 0px" }}
-                type="button"
-              >
-                Search
-              </button>
-            ) : (
-              <button
-                onClick={handleClick}
-                className="btn btn-dark"
-                style={{ borderRadius: "0px 30px 00px 0px" }}
-                type="button"
-              >
-                Search
-              </button>
-            )}
+            <button
+              onClick={handleClick}
+              className="btn btn-dark"
+              style={{ borderRadius: !focus ? "0px 30px 30px 0px" : "0px 30px 0px 0px" }}
+              type="button"
+            >
+              Search
+            </button>
           </div>
-
-          <div>
-            {/* <MathInput /> */}
-          </div>
-
-
-          {/* Math output preview */}
-          <div style={{ position: "relative", paddingTop: 1 }} >
-            <div style={{ position: "absolute", width: "100%" }}>
-              {!focus ? (
-                <div className="output" style={{ display: "none" }}>
-                  <div id="MathPreview"></div>
-                </div>
-              ) : (
-                <div className="output">
-                  <div id="MathPreview"></div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Render the MathKeyboard here */}
+          <MathKeyboard onSymbolSelect={handleSymbolSelect} isVisible={showKeyboard} />
         </div>
-        <div className="w-100 pt-4">
+        {/* End of latex-input-content */}
+
+        {/* Math output preview */}
+        <div className="output" id="MathPreview" style={{ display: !focus ? "none" : "block" }}>
+          {/* MathPreview content will be rendered here */}
+        </div>
+
+        {/* File upload input */}
+        <div className="file-upload-container">
           <input
             className="form-control"
             type="file"
@@ -282,6 +296,7 @@ function LaTeXInput() {
           />
         </div>
 
+        {/* Error message */}
         {error.isError && (
           <Alert icon={<CheckIcon fontSize="inherit" />} severity="error">
             {error.message}
@@ -290,6 +305,8 @@ function LaTeXInput() {
       </div>
     </>
   );
+
+
 }
 
 export default LaTeXInput;
