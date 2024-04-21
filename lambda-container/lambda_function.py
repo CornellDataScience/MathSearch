@@ -20,7 +20,7 @@ from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
 import io
-from dotenv import load_dotenv, find_dotenv
+#from dotenv import load_dotenv, find_dotenv
 
 print("Ending imports")
 

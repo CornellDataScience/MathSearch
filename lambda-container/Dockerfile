@@ -6,6 +6,7 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 RUN yum -y update
 RUN yum -y install mesa-libGL
 RUN yum -y install poppler-utils
+RUN yum -y install gcc python3-devel
 
 # Install the specified packages
 RUN pip install -r requirements.txt
