@@ -1,7 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import "katex/dist/katex.min.css";
-import { BlockMath, InlineMath } from "react-katex";
+import { BlockMath } from "react-katex";
 import { CognitoIdentityCredentials } from "aws-sdk/global";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
@@ -73,7 +73,11 @@ function LaTeXInput() {
 
 
   async function renderLatexToBlob(latexString) {
-    const response = await fetch(`/api/math/?from=${encodeURIComponent(latexString)}`);
+    const encodedLatexString = encodeURIComponent(latexString);
+    const apiUrl = `https://math.vercel.app/?from=${encodedLatexString}`;
+    const url = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+    const response = await fetch(url);
+
     const svgData = await response.text();
 
     return new Promise((resolve, reject) => {
