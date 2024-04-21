@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import "katex/dist/katex.min.css";
 import { BlockMath, InlineMath } from "react-katex";
@@ -7,28 +7,9 @@ import AWS from "aws-sdk";
 import { v4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
+import Alert from '@mui/material/Alert';
+import CheckIcon from '@mui/icons-material/Check';
 
-function updatePreview() {
-  let rawtext = document.getElementById("MathInput").value;
-  ReactDOM.render(
-    <BlockMath math={rawtext} />,
-    document.getElementById("MathPreview")
-  );
-}
-
-function get_image() {
-  var tex = document.getElementById("MathInput").value;
-  var url =
-    "http://chart.apis.google.com/chart?&cht=tx&chl=" +
-    encodeURIComponent(tex) +
-    "&chof=png";
-  return url;
-}
-
-function log_image() {
-  let url = get_image();
-  console.log(url);
-}
 
 /* BEGIN AWS CONSTANTS */
 
@@ -52,83 +33,148 @@ function LaTeXInput() {
   const [text, setText] = useState("");
   const [focus, setFocus] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState({ isError: false, message: "" });
 
-  /** Convert some text to a url which is an image */
-  const convert_text_to_image_url = (text) => {
-    var url =
-      "http://chart.apis.google.com/chart?&cht=tx&chl=" +
-      encodeURIComponent(text) +
-      "&chof=png";
-    return url;
+  const fetch = require('node-fetch');
+
+  const updatePreview = () => {
+    const rawtext = document.getElementById("MathInput").value;
+    ReactDOM.render(
+      <BlockMath math={rawtext} />,
+      document.getElementById("MathPreview")
+    );
   };
 
-  /** Uploads a PDF file and text query to S3 */
-  const uploadRequest = (file, text) => {
-    AWS.config.credentials.get((err) => {
+  function cleanSVG(svgData) {
+    const svgStart = svgData.indexOf('<svg');
+    return svgStart > 0 ? svgData.substring(svgStart) : svgData;
+  }
+
+  function extractViewBox(svgString) {
+    const viewBoxMatch = svgString.match(/viewBox="([^"]+)"/);
+    return viewBoxMatch ? viewBoxMatch[1].split(' ').map(Number) : null;
+  }
+
+  function scaleCanvas(svgString, targetWidth) {
+    const viewBox = extractViewBox(svgString);
+    if (!viewBox) {
+      console.error('No viewBox found in SVG');
+      return { width: targetWidth, height: 200 }; // Default if no viewBox is present
+    }
+
+    const [minX, minY, width, height] = viewBox;
+    const aspectRatio = width / height;
+
+    // Calculate the new height based on the target width and the aspect ratio
+    const scaledHeight = targetWidth / aspectRatio;
+
+    return { width: targetWidth, height: scaledHeight };
+  }
+
+
+  async function renderLatexToBlob(latexString) {
+    const response = await fetch(`/api/math/?from=${encodeURIComponent(latexString)}`);
+    const svgData = await response.text();
+
+    return new Promise((resolve, reject) => {
+      const cleanedSVG = cleanSVG(svgData); // Ensure your SVG is properly cleaned
+      const dimensions = scaleCanvas(cleanedSVG, 800);
+      const canvas = document.createElement('canvas');
+      canvas.width = dimensions.width;
+      canvas.height = dimensions.height;
+      const ctx = canvas.getContext('2d');
+
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          resolve(blob);  // Now you have a blob that can be uploaded to S3
+        }, 'image/png');
+      };
+      img.onerror = (err) => {
+        reject(new Error('Image loading failed: ' + err));
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanedSVG)));
+    });
+  }
+
+
+  /** Function to upload SVG as PDF and another PDF file to S3 */
+  const uploadRequest = async (file, text) => {
+    const s3 = new AWS.S3();
+    const fileKey = "inputs/" + uuid + "_pdf";
+    const convertedPDFKey = "inputs/" + uuid + "_image";
+
+    const imageBuffer = await renderLatexToBlob(text);
+
+
+    const convertedPDFParams = {
+      ACL: "public-read",
+      Body: imageBuffer,
+      Bucket: S3_INPUT_BUCKET,
+      Key: convertedPDFKey,
+    };
+
+    // Upload the converted PDF to S3
+    s3.upload(convertedPDFParams, (err, data) => {
       if (err) {
-        console.log("Error retrieving credentials: ", err);
+        console.error('Error uploading converted PDF: ', err);
         return;
       }
-
-      const myBucket = new AWS.S3({
-        params: { Bucket: S3_INPUT_BUCKET },
-        region: REGION,
-      });
-
-      const fileKey = "inputs/" + uuid + "_pdf";
-      const imageKey = "inputs/" + uuid + "_image";
-      const imageURL = convert_text_to_image_url(text);
-
-      console.log(S3_INPUT_BUCKET);
-
-      // Fetch image and upload to S3 input bucket
-      fetch(imageURL)
-        .then((response) => response.blob())
-        .then((blob) => {
-          const imageParams = {
-            ACL: "public-read",
-            Body: blob,
-            Bucket: S3_INPUT_BUCKET,
-            Key: imageKey,
-          };
-
-          myBucket
-            .putObject(imageParams)
-            .on("httpUploadProgress", (evt) => {
-              setProgress(Math.round((evt.loaded / evt.total) * 100));
-            })
-            .send((err) => {
-              if (err) console.log(err);
-            });
-        })
-
-        // Upload PDF to S3 input bucket
-        .then(() => {
-          const pdfParams = {
-            ACL: "public-read",
-            Body: file,
-            Bucket: S3_INPUT_BUCKET,
-            Key: fileKey,
-          };
-
-          myBucket
-            .putObject(pdfParams)
-            .on("httpUploadProgress", (evt) => {
-              setProgress(Math.round((evt.loaded / evt.total) * 100));
-            })
-            .send((err) => {
-              if (err) console.log(err);
-            });
-        });
+      //console.log('Successfully uploaded converted PDF:', data.Location);
     });
+
+
+    // Parameters for existing PDF upload
+    const existingPDFParams = {
+      ACL: "public-read",
+      Body: file,
+      Bucket: S3_INPUT_BUCKET,
+      Key: fileKey,
+    };
+
+    // Upload existing PDF to S3
+    s3.upload(existingPDFParams, function (err, data) {
+      if (err) {
+        console.error('Error uploading existing PDF:', err);
+      } else {
+        console.log('Successfully uploaded existing PDF:', data.Location);
+      }
+    });
+
+
   };
 
   /** Handles when the user clicks the Search button */
   const handleClick = async () => {
-    uploadRequest(selectedFile, text);
-    navigate(`/results/${uuid}`)
+    // Reset the error state at the beginning of each submission attempt
+    setError({ isError: false, message: "" });
+
+    // Ensure there's a file selected and the text is not empty before proceeding
+    if (!selectedFile) {
+      setError({ isError: true, message: "No file selected for upload." });
+      return; // Stop execution if no file is selected
+    }
+
+    if (text.trim() === "") {
+      setError({ isError: true, message: "Text input cannot be empty." });
+      return; // Stop execution if text input is empty
+    }
+
+    // No need to check for existing errors here as we reset them at the start
+    // and we have already checked for all input-related errors above
+
+    // If no errors, proceed with upload
+    await uploadRequest(selectedFile, text);
+
+    //await new Promise(resolve => setTimeout(resolve, 2000));
+
+    navigate(`/results/${uuid}`);
+
+    setError({ isError: false, message: "" });
+    ;
   };
+
 
   /** Handles when user types in the search bar */
   const handleChange = async (event) => {
@@ -145,9 +191,24 @@ function LaTeXInput() {
     setFocus(false);
   };
 
-  /** When user uploads a file */
   const handleFileInput = (e) => {
-    setSelectedFile(e.target.files[0]);
+    const file = e.target.files[0];
+
+    // Check if the file is a PDF by looking at its MIME type
+    if (file && file.type === "application/pdf") {
+      console.log("PDF file selected:", file);
+      setSelectedFile(file);
+      // Ensure any previous error state is cleared upon successful file selection
+      setError({ isError: false, message: "" });
+    } else {
+      console.log("Invalid file type. Please select a PDF.");
+      // Optionally, clear the selected file input if it's not a PDF
+      e.target.value = "";
+      // And set the selected file in your state to null
+      setSelectedFile(null);
+      // Update the error state with an appropriate message
+      setError({ isError: true, message: "Invalid file type. Please select a PDF." });
+    }
   };
 
   return (
@@ -155,7 +216,8 @@ function LaTeXInput() {
       <div className="latex-input-container">
         <div className="latex-input-content">
           {/* Math input */}
-          <div className="input-group">
+          <div className="input-group"
+          >
             <textarea
               rows="1"
               className={
@@ -163,7 +225,7 @@ function LaTeXInput() {
                   ? "form-control shadow-none searchbar searchbar-empty"
                   : "form-control shadow-none searchbar searchbar-full"
               }
-              placeholder="Try the Basel Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
+              placeholder="Try the Base Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
               id="MathInput"
               onKeyUp={updatePreview}
               onChange={handleChange}
@@ -191,8 +253,13 @@ function LaTeXInput() {
             )}
           </div>
 
+          <div>
+            {/* <MathInput /> */}
+          </div>
+
+
           {/* Math output preview */}
-          <div style={{ position: "relative", paddingTop: 1 }}>
+          <div style={{ position: "relative", paddingTop: 1 }} >
             <div style={{ position: "absolute", width: "100%" }}>
               {!focus ? (
                 <div className="output" style={{ display: "none" }}>
@@ -214,10 +281,15 @@ function LaTeXInput() {
             onChange={handleFileInput}
           />
         </div>
+
+        {error.isError && (
+          <Alert icon={<CheckIcon fontSize="inherit" />} severity="error">
+            {error.message}
+          </Alert>
+        )}
       </div>
     </>
   );
 }
 
 export default LaTeXInput;
-export { get_image };

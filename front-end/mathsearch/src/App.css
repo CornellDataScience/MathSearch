@@ -43,3 +43,221 @@
 /*   padding-bottom: 10px;   */
 /* }                         */
 /*****************************/
+
+/* App.css */
+
+.App {
+  font-family: Arial, sans-serif;
+}
+
+.App-header {
+
+  background-color: #333;
+  /* Changed header color to dark */
+  padding: 30px 0;
+  text-align: center;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  /* Change the font family here */
+
+}
+
+
+.App-main {
+  display: flex;
+  flex-direction: column;
+
+
+  text-align: center;
+  /* Align text inside the main container */
+
+}
+
+.mission-section {
+  background-image: url('../public/background.png');
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+}
+
+
+
+.mission-text {
+
+  animation: fadeIn 1s ease-in forwards;
+  padding-left: 10%;
+  padding-right: 10%;
+  padding-bottom: 130px;
+
+  color: white;
+  width: 50%;
+  text-align: left;
+
+}
+
+h1 {
+  font-size: 60px;
+
+}
+
+h2 {
+  font-size: 42px;
+}
+
+h3 {
+  font-size: 48px;
+}
+
+p {
+  font-size: 24px;
+
+}
+
+li {
+  font-size: 22px;
+}
+
+.mission-image {
+
+  width: 50%;
+  align-items: center;
+}
+
+.mission-image img {
+  padding-top: 100px;
+  padding-bottom: 100px;
+  width: 70%;
+
+}
+
+.problem {
+
+  display: flex;
+  flex-direction: row;
+
+}
+
+.problem-left {
+  animation: fadeIn 1s ease-in forwards;
+  width: 50%;
+  text-align: left;
+  padding-top: 70px;
+  padding-bottom: 100px;
+  margin-left: 15%;
+  margin-right: 10%;
+}
+
+.problem-right {
+  animation: fadeIn 1s ease-in forwards;
+  width: 50%;
+  text-align: left;
+  padding-top: 100px;
+  padding-bottom: 100px;
+  margin-left: 10%;
+  margin-right: 15%;
+}
+
+
+.dot-list {
+  list-style-type: disc;
+}
+
+
+.features {
+  background-image: url('../public/background.png');
+  background-size: cover;
+  color: white;
+  align-items: center;
+
+}
+
+.features-content {
+
+  display: flex;
+
+  justify-content: center;
+  /* Center horizontally */
+
+  align-items: center;
+  flex-direction: row;
+  padding-top: 100px;
+  padding-bottom: 100px;
+
+}
+
+.step {
+
+  width: 250px;
+  margin-left: 5%;
+  margin-right: 5%;
+
+}
+
+
+
+
+
+
+
+.team-section {
+
+
+
+  background-color: rgb(230, 230, 230);
+  text-align: center;
+  align-items: center;
+
+}
+
+.team-section-content {
+  display: flex;
+
+  padding: 10px 0;
+  justify-content: center;
+
+
+}
+
+.team-list {
+  list-style: none;
+  margin-left: 100px;
+  margin-right: 100px;
+}
+
+.team-list li {
+  margin: 10px;
+  font-size: 16px;
+}
+
+.Footer {
+
+  color: #fff;
+  text-align: center;
+  padding: 20px 0;
+}
+
+
+@media screen and (max-width: 600px) {
+  .mission-section {
+    flex-direction: column;
+    /* Change to vertical stacking on small screens */
+  }
+
+  .problem {
+    flex-direction: column;
+  }
+
+  .features-content {
+    flex-direction: column;
+
+  }
+
+  .team-section-content {
+    flex-direction: column;
+
+  }
+
+}

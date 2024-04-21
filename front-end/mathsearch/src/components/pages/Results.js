@@ -5,7 +5,6 @@ import NavBar from "../NavBar.js";
 import { useLocation, useParams } from "react-router-dom";
 import { CognitoIdentityCredentials } from "aws-sdk/global";
 import AWS from "aws-sdk";
-
 // import { pdfjs } from 'react-pdf';
 
 // pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -23,6 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = url
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID;
 const REGION = process.env.REACT_APP_REGION;
 const S3_OUTPUT_BUCKET = process.env.REACT_APP_S3_OUTPUT_BUCKET;
+const WEBSOCKET_URL = 'wss://t05sr0quhf.execute-api.us-east-1.amazonaws.com/production/';
 
 // Initialize the Amazon Cognito credentials provider
 AWS.config.region = REGION;
@@ -48,6 +48,8 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [pdfDownloaded, setPdfDownloaded] = useState(false);
   const [jsonDownloaded, setJsonDownloaded] = useState(false);
+
+  const [webSocket, setWebSocket] = useState(null);
 
   const downloadRequest = (uuid) => {
     AWS.config.credentials.get((err) => {
@@ -103,24 +105,59 @@ const Results = () => {
     });
   };
 
-  /** Retrieve the data */
-  const fetchData = async () => {
-    if (!pdfDownloaded || !jsonDownloaded) {
-      console.log(pdfDownloaded);
-      console.log(jsonDownloaded);
-      // downloadRequest("123456");
-      downloadRequest(uuid);
-    } else {
-      console.log("Loading is complete!")
-      setLoading(false);
-    }
-  };
 
-  // Run useEffect only on page load
   useEffect(() => {
-    const intervalId = setInterval(fetchData, 5000);
-    return () => clearInterval(intervalId);
-  }, [pdfDownloaded, jsonDownloaded]);
+    console.log("Component mounted, setting up WebSocket");
+    const ws = new WebSocket(WEBSOCKET_URL);
+
+    ws.onopen = () => {
+      console.log('WebSocket Connected');
+      const message = JSON.stringify({
+        action: "registerConnection", // The action your Lambda function looks for
+        identifiers: {
+          uuid: uuid, // Make sure this variable contains the correct UUID
+        }
+      });
+      ws.send(message);
+      console.log(`Message sent: ${message}`);
+    };
+
+    ws.onmessage = (message) => {
+      console.log('WebSocket Message:', message.data);
+      const data = JSON.parse(message.data);
+      if (data.type === "START_FETCH") {
+        fetchData();
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.log('WebSocket Error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket Disconnected');
+    };
+
+    setWebSocket(ws);
+
+    const fetchData = async () => {
+      if (!pdfDownloaded || !jsonDownloaded) {
+        downloadRequest(uuid);
+      } else {
+        console.log("Loading is complete!");
+        setLoading(false);
+      }
+    };
+
+    // Clean up on unmount
+    return () => {
+      ws.close();
+    };
+  }, [pdfDownloaded, jsonDownloaded, uuid]); // Ensuring uuid is in the dependency array if it changes
+
+
+
+
 
   const handleTestClick = (event) => {
     console.log(uuid)
@@ -175,7 +212,7 @@ const Results = () => {
           </div>
         </div>
       ) : (
-        <div style={{backgroundColor: "#eeeeee"}}>
+        <div style={{ backgroundColor: "#eeeeee" }}>
           <NavBar />
           {/* <button onClick={handleTestClick}>Test</button> */}
           {pdf !== null && pages && (
