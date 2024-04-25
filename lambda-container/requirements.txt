@@ -1,8 +1,8 @@
 boto3
 sagemaker
+opencv-python
 pdf2image==1.16.3
 Pillow==10.1.0
 PyPDF2==3.0.1
-rapid_latex_ocr==0.0.4
 sympy==1.12
 zss==1.2.0

@@ -4,41 +4,25 @@ print("Starting imports")
 import boto3
 import json
 import dataHandler
-import urllib3
 import subprocess
 import os
 import sympy as sp
 from sympy.parsing.latex import parse_latex
 from zss import Node, distance
-from rapid_latex_ocr import LatexOCR
 import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
 import cv2
-import time
-import numpy as np
 from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
+import requests
+import io
+
 print("Ending imports")
 
 # Initialize S3 client
 s3 = boto3.client('s3')
-
-# Add an extra backslash to any of the string elements which are in python list escape
-def escape_chars(latex_src):
-  escape_char = ["n", "r", "f", "b", "t"]
-  str_index = 0
-  while str_index < len(latex_src):
-    if latex_src.sub(str_index, str_index+1) == "\\":
-      # check next character
-      if str_index+1 < len(latex_src) and latex_src.sub(str_index+1, str_index+2) in escape_char:
-        # add another slash
-        latex_src = latex_src[:str_index]+"\\"+latex_src[str_index+1:]
-        str_index += 1
-    str_index += 1
-
-print("Finished escape_chars")
 
 def preprocess_latex(latex_src, rem):
   """
@@ -72,6 +56,7 @@ def preprocess_latex(latex_src, rem):
     format_index = final_string.find(rem)
   
   return final_string
+
 print("Finished preprocess_latex")
 
 # Parses sympy expression into Zss tree
@@ -108,29 +93,40 @@ def custom_edit_distance(query_tree, other_tree):
 
 print("Finished custom_edit_distance")
 
-# Returns string which has LaTeX source code
-def image_to_latex_convert(path, query_bool):
-    ocr_model_dir = os.environ["LAMBDA_TASK_ROOT"]
-    image_resizer_path = f"{ocr_model_dir}/ocr-models/image_resizer.onnx"
-    encoder_path = f"{ocr_model_dir}/ocr-models/encoder.onnx"
-    decoder_path = f"{ocr_model_dir}/ocr-models/decoder.onnx"
-    tokenizer_json = f"{ocr_model_dir}/ocr-models/tokenizer.json"
+# Returns a well-formatted LaTeX string represent the equation image 'image'
+def image_to_latex_convert(image, query_bool):
 
-    model = LatexOCR(image_resizer_path=image_resizer_path,
-                encoder_path=encoder_path,
-                decoder_path=decoder_path,
-                tokenizer_json=tokenizer_json)
-    
-    # if query_bool, then path is a path to query image; 
-    if query_bool:
-      with open(path, "rb") as f:
-          data = f.read()
-      result, elapse = model(data)
+    # Hardcoded CDS account response headers (placeholders for now)
+    headers = {
+        "app_id": "mathsearch_ff86f3_059645",
+        "app_key": os.environ.get("APP_KEY")
+    }
+      
+    # Declare api request payload (refer to https://docs.mathpix.com/?python#introduction for description)
+    data = {
+        "formats": ["latex_styled"], 
+        "rm_fonts": True, 
+        "rm_spaces": False,
+        "idiomatic_braces": True
+    }
+
+    # assume that image is stored in bytes
+    print(f"Type of image given as parameter to image_to_latex_convert: {type(image)}")
+    response = requests.post("https://api.mathpix.com/v3/text",
+                                files={"file": image if query_bool else io.BufferedReader(io.BytesIO(image))},
+                                data={"options_json": json.dumps(data)},
+                                headers=headers)
+       
+    # Check if the request was successful
+    if response.status_code == 200:
+        print("Successful API call!!")
+        response_data = response.json()
+        #print(json.dumps(response_data, indent=4, sort_keys=True))  # Print formatted JSON response
+        #print()
+        return response_data.get("latex_styled", "")  # Get the LaTeX representation from the response, safely access the key
     else:
-      result, elapse = model(path)
-      print("Latex OCR decoded YOLO image as byte array successfully!")
-    
-    return result
+        print("Failed to get LaTeX on API call. Status code:", response.status_code)
+        return ""
 
 print("Finished image_to_latex_convert")
 
@@ -253,37 +249,39 @@ def final_output(pdf_name, bounding_boxes):
 
 print("Finished final_output")
 
+
+# Store string repr. of LaTeX equation and its page number in list
 def parse_tree_similarity(yolo_result, query_path):
-  """
-  yolo_result : list of tuples (np array of image bytes, page num)
-  query_path : path to the query image which was downloaded from S3
-  """
-  # rem is list containing all formatting elements we want to remove
-  rem = ["\mathrm{", "\mathcal{", "\\text{"]
+  # list containing all formatting elements we want to remove
+  #formatting_elements_to_remove = ["\mathrm{", "\mathcal{", "\\text{", "\left", "\right"]
 
-  # Run Rapid LaTeX OCR on all images in the directory + query
-  query_text = image_to_latex_convert(query_path, query_bool=True)
-
-  # Store string repr. of LaTeX equation and its page number in list
+  # this is not going to work!! extract query into bytes
+  with open(query_path, "rb") as f:
+      data = f.read()
+      query_text = image_to_latex_convert(data, query_bool=True)
+  # for elem in formatting_elements_to_remove:
+  #   query_latex = preprocess_latex(query_latex, elem)
+      
   equations_list = []
   for dict_elem, page_num in yolo_result:
     eqn_num = 1
     for byte_elem in dict_elem["cropped_ims"]:
-      np_elem = np.array(byte_elem).astype(np.uint8)
-      # Run rapid latex OCR: returns String LaTeX
-      latex_string = image_to_latex_convert(np_elem, query_bool=False)
+      #np_elem = np.array(byte_elem).astype(np.uint8)
+      latex_string = image_to_latex_convert(byte_elem, query_bool=False)
 
       # remove formatting elements from latex_string
-      edited_latex_string = latex_string
-      for elem in rem:
-          if query_text.find(elem) == -1:
-            edited_latex_string = preprocess_latex(edited_latex_string, elem)
-      equations_list.append((edited_latex_string, page_num, eqn_num))
+      #edited_latex_string = latex_string
+      # for elem in formatting_elements_to_remove:
+      #     if query_text.find(elem) == -1:
+      #       edited_latex_string = preprocess_latex(edited_latex_string, elem)
+      equations_list.append((latex_string, page_num, eqn_num))
     
+  print("Finished all MathPix API calls!")
+
   # create ZSS tree of query  
   zss_query = source_to_zss(query_text)
   
-  # now parse all LaTeX source code into ZSS tree and compute edit distance with query for each equation
+  # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
   # each element in tree_dist is (latex_string, edit_dist_from_query, page_num, eqn_num)
   tree_dists = []
   for eqn, page_num, eqn_num in equations_list:
@@ -296,6 +294,47 @@ def parse_tree_similarity(yolo_result, query_path):
   top_n = 6 
   sorted(tree_dists, key=lambda x: x[1])
   return tree_dists[:top_n]
+
+# def parse_tree_similarity(img_bytes, query_path):
+#   # query_path : path to the query image which was downloaded from S3
+  
+#   # rem is list containing all formatting elements we want to remove
+#   formatting_elements_to_remove = ["\mathrm{", "\mathcal{", "\\text{", "\left", "\right"]
+
+#   # Get preprocessed LaTeX representation of query
+#   query_latex = image_to_latex_convert(query_path, query_bool=True)
+#   for elem in formatting_elements_to_remove :
+#         query_latex = preprocess_latex(query_latex, elem)
+  
+#   # Get a list of tuples of (MathPix OCR text of image, image filename)
+#   source_latex = []
+#   for img in img_bytes:
+#         latex_string = image_to_latex_convert(img, query_bool=True)
+#         for elem in formatting_elements_to_remove :
+#             latex_string = preprocess_latex(latex_string, elem)
+#         source_latex.append( (latex_string, filename) )
+
+#   #print("#3")
+
+#   # create ZSS tree of the query  
+#   zss_query = source_to_zss(query_latex)
+
+#   #print("#4")
+
+#   # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
+#   # each element in tree_dist is (latex_string, edit_dist_from_query, filename)
+#   tree_dists = []
+#   for eqn, filename in source_latex:
+#     print(filename)
+#     zss_tree = source_to_zss(eqn)
+#     dist = custom_edit_distance(zss_query, zss_tree)
+#     tree_dists.append((eqn, dist, filename))
+
+#   #print("#5")
+
+#   # sort equations by second element in tuple i.e. edit_dist_from_query
+#   # return equations with (top_n-1) smallest edit distances
+#   return tree_dists
 
 print("Finished parse_tree_similarity")
 
