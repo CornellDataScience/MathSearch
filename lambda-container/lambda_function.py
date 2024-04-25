@@ -18,6 +18,7 @@ from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
 import io
+import numpy as np
 
 print("Ending imports")
 
@@ -266,8 +267,8 @@ def parse_tree_similarity(yolo_result, query_path):
   for dict_elem, page_num in yolo_result:
     eqn_num = 1
     for byte_elem in dict_elem["cropped_ims"]:
-      #np_elem = np.array(byte_elem).astype(np.uint8)
-      latex_string = image_to_latex_convert(byte_elem, query_bool=False)
+      img_elem = np.array(byte_elem).tobytes()
+      latex_string = image_to_latex_convert(img_elem, query_bool=False)
 
       # remove formatting elements from latex_string
       #edited_latex_string = latex_string

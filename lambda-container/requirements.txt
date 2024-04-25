@@ -1,6 +1,7 @@
 boto3
 sagemaker
 opencv-python
+numpy
 pdf2image==1.16.3
 Pillow==10.1.0
 PyPDF2==3.0.1
