@@ -22,7 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = url
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID;
 const REGION = process.env.REACT_APP_REGION;
 const S3_OUTPUT_BUCKET = process.env.REACT_APP_S3_OUTPUT_BUCKET;
-const WEBSOCKET_URL = process.env.WEBSOCKET_URL;
+const WEBSOCKET_URL = 'wss://t05sr0quhf.execute-api.us-east-1.amazonaws.com/production/';
 
 // Initialize the Amazon Cognito credentials provider
 AWS.config.region = REGION;
