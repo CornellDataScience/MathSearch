@@ -49,8 +49,6 @@ const Results = () => {
   const [pdfDownloaded, setPdfDownloaded] = useState(false);
   const [jsonDownloaded, setJsonDownloaded] = useState(false);
 
-  const [webSocket, setWebSocket] = useState(null);
-
   const downloadRequest = (uuid) => {
     AWS.config.credentials.get((err) => {
       if (err) {
@@ -62,15 +60,12 @@ const Results = () => {
         region: REGION,
       });
 
-      // const fileKey = uuid + ".pdf";
-      const fileKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6.pdf";
-      // const jsonKey = uuid + "_results.json";
-      const jsonKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6" + "_results.json";
+      const fileKey = uuid + ".pdf";
+      const jsonKey = uuid + "_results.json";
 
       console.log(S3_OUTPUT_BUCKET);
 
       // Download PDF from S3 output bucket
-      console.log(fileKey)
       const pdfParams = {
         Bucket: S3_OUTPUT_BUCKET,
         Key: fileKey,
@@ -124,8 +119,10 @@ const Results = () => {
       console.log('WebSocket Message:', message.data);
       // Handle incoming messages
       // Assuming 'message' has a 'type' property to dictate actions
-      console.log('Start Fetch')
-      fetchData();
+      const data = JSON.parse(message.data);
+      if (data.type === "START_FETCH") { // This condition is just an example
+        fetchData();
+      }
     };
 
     ws.onerror = (error) => {
@@ -136,15 +133,15 @@ const Results = () => {
       console.log('WebSocket Disconnected');
     };
 
-    setWebSocket(ws);
-
     // This function might need to be moved outside useEffect or wrapped in a useCallback if used elsewhere
     const fetchData = async () => {
       if (!pdfDownloaded || !jsonDownloaded) {
         console.log(pdfDownloaded);
         console.log(jsonDownloaded);
+        // downloadRequest("123456");
         downloadRequest(uuid);
       } else {
+        console.log("Loading is complete!")
         setLoading(false);
       }
     };
@@ -156,14 +153,6 @@ const Results = () => {
   }, [pdfDownloaded, jsonDownloaded]); // Keep these dependencies if their changes should affect the effect
 
 
-
-  const handleTestClick = (event) => {
-    console.log(uuid)
-    console.log(pages);
-    console.log(pdf);
-    console.log(pdfDownloaded);
-    console.log(jsonDownloaded);
-  };
 
   /**
    * request id is passed from the url
