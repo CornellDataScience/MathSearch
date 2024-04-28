@@ -22,7 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = url
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID;
 const REGION = process.env.REACT_APP_REGION;
 const S3_OUTPUT_BUCKET = process.env.REACT_APP_S3_OUTPUT_BUCKET;
-const WEBSOCKET_URL = process.env.WEBSOCKET_URL;
+const WEBSOCKET_URL = 'wss://t05sr0quhf.execute-api.us-east-1.amazonaws.com/production/';
 
 // Initialize the Amazon Cognito credentials provider
 AWS.config.region = REGION;
@@ -48,6 +48,8 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [pdfDownloaded, setPdfDownloaded] = useState(false);
   const [jsonDownloaded, setJsonDownloaded] = useState(false);
+
+  const [webSocket, setWebSocket] = useState(null);
 
   const downloadRequest = (uuid) => {
     AWS.config.credentials.get((err) => {
@@ -133,6 +135,8 @@ const Results = () => {
       console.log('WebSocket Disconnected');
     };
 
+    setWebSocket(ws);
+
     // This function might need to be moved outside useEffect or wrapped in a useCallback if used elsewhere
     const fetchData = async () => {
       if (!pdfDownloaded || !jsonDownloaded) {
@@ -153,6 +157,14 @@ const Results = () => {
   }, [pdfDownloaded, jsonDownloaded]); // Keep these dependencies if their changes should affect the effect
 
 
+
+  const handleTestClick = (event) => {
+    console.log(uuid)
+    console.log(pages);
+    console.log(pdf);
+    console.log(pdfDownloaded);
+    console.log(jsonDownloaded);
+  };
 
   /**
    * request id is passed from the url
