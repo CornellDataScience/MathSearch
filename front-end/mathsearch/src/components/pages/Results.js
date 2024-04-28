@@ -140,15 +140,11 @@ const Results = () => {
 
     // This function might need to be moved outside useEffect or wrapped in a useCallback if used elsewhere
     const fetchData = async () => {
-      console.log('jake')
       if (!pdfDownloaded || !jsonDownloaded) {
         console.log(pdfDownloaded);
         console.log(jsonDownloaded);
-        // downloadRequest("123456");
-        console.log('Beginning downloadRequest')
         downloadRequest(uuid);
       } else {
-        console.log("Loading is complete!")
         setLoading(false);
       }
     };
