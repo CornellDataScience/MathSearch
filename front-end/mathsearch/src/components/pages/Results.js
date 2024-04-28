@@ -22,7 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = url
 const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID;
 const REGION = process.env.REACT_APP_REGION;
 const S3_OUTPUT_BUCKET = process.env.REACT_APP_S3_OUTPUT_BUCKET;
-const WEBSOCKET_URL = process.env.WEBSOCKET_URL;
+const WEBSOCKET_URL = 'wss://t05sr0quhf.execute-api.us-east-1.amazonaws.com/production/';
 
 // Initialize the Amazon Cognito credentials provider
 AWS.config.region = REGION;
@@ -62,15 +62,12 @@ const Results = () => {
         region: REGION,
       });
 
-      // const fileKey = uuid + ".pdf";
-      const fileKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6.pdf";
-      // const jsonKey = uuid + "_results.json";
-      const jsonKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6" + "_results.json";
+      const fileKey = uuid + ".pdf";
+      const jsonKey = uuid + "_results.json";
 
       console.log(S3_OUTPUT_BUCKET);
 
       // Download PDF from S3 output bucket
-      console.log(fileKey)
       const pdfParams = {
         Bucket: S3_OUTPUT_BUCKET,
         Key: fileKey,
@@ -124,8 +121,10 @@ const Results = () => {
       console.log('WebSocket Message:', message.data);
       // Handle incoming messages
       // Assuming 'message' has a 'type' property to dictate actions
-      console.log('Start Fetch')
-      fetchData();
+      const data = JSON.parse(message.data);
+      if (data.type === "START_FETCH") { // This condition is just an example
+        fetchData();
+      }
     };
 
     ws.onerror = (error) => {
@@ -143,8 +142,10 @@ const Results = () => {
       if (!pdfDownloaded || !jsonDownloaded) {
         console.log(pdfDownloaded);
         console.log(jsonDownloaded);
+        // downloadRequest("123456");
         downloadRequest(uuid);
       } else {
+        console.log("Loading is complete!")
         setLoading(false);
       }
     };
