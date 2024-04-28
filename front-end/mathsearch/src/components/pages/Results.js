@@ -108,24 +108,21 @@ const Results = () => {
 
   useEffect(() => {
     console.log("Component mounted, setting up WebSocket");
-    const ws = new WebSocket(WEBSOCKET_URL);
+    const ws = new WebSocket(`${WEBSOCKET_URL}?uuid=${uuid}`);
 
     ws.onopen = () => {
       console.log('WebSocket Connected');
-      const message = JSON.stringify({
-        action: "registerConnection", // The action your Lambda function looks for
-        identifiers: {
-          uuid: uuid, // Make sure this variable contains the correct UUID
-        }
-      });
+      const message = JSON.stringify({ action: "register", uuid: uuid });
+      console.log('Sending message:', message);
       ws.send(message);
-      console.log(`Message sent: ${message}`);
     };
 
     ws.onmessage = (message) => {
       console.log('WebSocket Message:', message.data);
+      // Handle incoming messages
+      // Assuming 'message' has a 'type' property to dictate actions
       const data = JSON.parse(message.data);
-      if (data.type === "START_FETCH") {
+      if (data.type === "START_FETCH") { // This condition is just an example
         fetchData();
       }
     };
@@ -140,11 +137,15 @@ const Results = () => {
 
     setWebSocket(ws);
 
+    // This function might need to be moved outside useEffect or wrapped in a useCallback if used elsewhere
     const fetchData = async () => {
       if (!pdfDownloaded || !jsonDownloaded) {
+        console.log(pdfDownloaded);
+        console.log(jsonDownloaded);
+        // downloadRequest("123456");
         downloadRequest(uuid);
       } else {
-        console.log("Loading is complete!");
+        console.log("Loading is complete!")
         setLoading(false);
       }
     };
@@ -153,9 +154,7 @@ const Results = () => {
     return () => {
       ws.close();
     };
-  }, [pdfDownloaded, jsonDownloaded, uuid]); // Ensuring uuid is in the dependency array if it changes
-
-
+  }, [pdfDownloaded, jsonDownloaded]); // Keep these dependencies if their changes should affect the effect
 
 
 
