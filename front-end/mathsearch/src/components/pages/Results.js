@@ -62,12 +62,15 @@ const Results = () => {
         region: REGION,
       });
 
-      const fileKey = uuid + ".pdf";
-      const jsonKey = uuid + "_results.json";
+      // const fileKey = uuid + ".pdf";
+      const fileKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6.pdf";
+      // const jsonKey = uuid + "_results.json";
+      const jsonKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6" + "_results.json";
 
       console.log(S3_OUTPUT_BUCKET);
 
       // Download PDF from S3 output bucket
+      console.log(fileKey)
       const pdfParams = {
         Bucket: S3_OUTPUT_BUCKET,
         Key: fileKey,
@@ -121,10 +124,8 @@ const Results = () => {
       console.log('WebSocket Message:', message.data);
       // Handle incoming messages
       // Assuming 'message' has a 'type' property to dictate actions
-      const data = JSON.parse(message.data);
-      if (data.type === "START_FETCH") { // This condition is just an example
-        fetchData();
-      }
+      console.log('Start Fetch')
+      fetchData();
     };
 
     ws.onerror = (error) => {
@@ -139,10 +140,12 @@ const Results = () => {
 
     // This function might need to be moved outside useEffect or wrapped in a useCallback if used elsewhere
     const fetchData = async () => {
+      console.log('jake')
       if (!pdfDownloaded || !jsonDownloaded) {
         console.log(pdfDownloaded);
         console.log(jsonDownloaded);
         // downloadRequest("123456");
+        console.log('Beginning downloadRequest')
         downloadRequest(uuid);
       } else {
         console.log("Loading is complete!")
