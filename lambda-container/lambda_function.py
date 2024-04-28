@@ -1,6 +1,5 @@
 from constants import *
 import os
-print("Starting imports")
 import boto3
 import json
 import dataHandler
@@ -19,8 +18,9 @@ import traceback
 import requests
 import io
 import numpy as np
+import time
 
-print("Ending imports")
+print("Finished imports")
 
 # Initialize S3 client
 s3 = boto3.client('s3')
@@ -95,6 +95,7 @@ def custom_edit_distance(query_tree, other_tree):
 print("Finished custom_edit_distance")
 
 # Returns a well-formatted LaTeX string represent the equation image 'image'
+# Makes the MathPix API call
 def image_to_latex_convert(image, query_bool):
 
     # Hardcoded CDS account response headers (placeholders for now)
@@ -111,10 +112,11 @@ def image_to_latex_convert(image, query_bool):
         "idiomatic_braces": True
     }
 
+    print(f"type of img sent to mathpix {type(image)}, {query_bool}")
+    #print(f"type after buffered reader stuff {type(io.BufferedReader(io.BytesIO(image)))}")
     # assume that image is stored in bytes
-    print(f"Type of image given as parameter to image_to_latex_convert: {type(image)}")
     response = requests.post("https://api.mathpix.com/v3/text",
-                                files={"file": image if query_bool else io.BufferedReader(io.BytesIO(image))},
+                                files={"file": image},
                                 data={"options_json": json.dumps(data)},
                                 headers=headers)
        
@@ -123,7 +125,6 @@ def image_to_latex_convert(image, query_bool):
         print("Successful API call!!")
         response_data = response.json()
         #print(json.dumps(response_data, indent=4, sort_keys=True))  # Print formatted JSON response
-        #print()
         return response_data.get("latex_styled", "")  # Get the LaTeX representation from the response, safely access the key
     else:
         print("Failed to get LaTeX on API call. Status code:", response.status_code)
@@ -225,10 +226,10 @@ def final_output(pdf_name, bounding_boxes):
     image_path_out = IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".png"
     # pass in list of bounding boxes for each page
     draw_bounding_box(image_path_in, bounding_boxes[i], image_path_out)
-    s3.upload_file(image_path_out[:-4]+".pdf", OUTPUT_BUCKET, str(i) + ".pdf")
+    #s3.upload_file(image_path_out[:-4]+".pdf", OUTPUT_BUCKET, str(i) + ".pdf")
   print("drew bounding boxes!")
 
-  # merge the rendered images to the pdf, save to /pdf_out
+  # merge the rendered images (with bounding boxes) to the pdf, and upload to S3
   with open(pdf_in, 'rb') as file:
     with open(pdf_out, 'wb') as pdf_out_file:
       pdf = PyPDF2.PdfReader(file)
@@ -254,31 +255,55 @@ print("Finished final_output")
 # Store string repr. of LaTeX equation and its page number in list
 def parse_tree_similarity(yolo_result, query_path):
   # list containing all formatting elements we want to remove
-  #formatting_elements_to_remove = ["\mathrm{", "\mathcal{", "\\text{", "\left", "\right"]
 
-  # this is not going to work!! extract query into bytes
   with open(query_path, "rb") as f:
       data = f.read()
       query_text = image_to_latex_convert(data, query_bool=True)
-  # for elem in formatting_elements_to_remove:
-  #   query_latex = preprocess_latex(query_latex, elem)
+  query_text.replace(" ", "")
+  print(f"query_text: {query_text}")
+
+  # ADD code to pre-process query string (from ML subteam)
       
   equations_list = []
   for dict_elem, page_num in yolo_result:
     eqn_num = 1
-    for byte_elem in dict_elem["cropped_ims"]:
-      img_elem = np.array(byte_elem).tobytes()
-      latex_string = image_to_latex_convert(img_elem, query_bool=False)
+    for img_array in dict_elem["cropped_ims"]:
+      try:
+        image = Image.fromarray(np.array(img_array, dtype=np.uint8))
+        byte_stream = io.BytesIO()
+        image.save(byte_stream, format='PNG')  # Save the image to a byte stream
+        byte_stream.seek(0)
+        img_bytes = byte_stream.read()
+    
+        # Assuming image_to_latex_convert can directly handle byte array of an image
+        latex_string = image_to_latex_convert(img_bytes, query_bool=False)
+        print(f"{eqn_num} on {page_num}: {latex_string}")
+        equations_list.append((latex_string, page_num, eqn_num))
+      except Exception as e:
+        print(f"Failed to process image or convert to LaTeX: {e}")
+      eqn_num += 1
 
-      # remove formatting elements from latex_string
-      #edited_latex_string = latex_string
-      # for elem in formatting_elements_to_remove:
-      #     if query_text.find(elem) == -1:
-      #       edited_latex_string = preprocess_latex(edited_latex_string, elem)
-      equations_list.append((latex_string, page_num, eqn_num))
+  # equations_list = []
+  # for dict_elem, page_num in yolo_result:
+  #   eqn_num = 1
+  #   for img_elem in dict_elem["cropped_ims"]:
+  #     print(f"img_elem {img_elem}")
+  #     print(f"type of img_elem {type(img_elem)}")
+
+  #     #byte_elem = np.array(byte_elem).tobytes()
+  #     byte_elem = bytes(img_elem)
+  #     print(f"type of byte_elem {type(byte_elem)}")
+  #     #print(img_elem)
+  #     latex_string = image_to_latex_convert(byte_elem, query_bool=False)
+  #     print(f"{eqn_num} on {page_num}: {latex_string}")
+
+  #     # ENTER CODE FROM ML SUB-TEAM to edit the latex string
+  #     # editing the escape_chars and preprocess_latex function
+  #     equations_list.append((latex_string, page_num, eqn_num))
+  #     eqn_num += 1 # increment equation num
     
   print("Finished all MathPix API calls!")
-
+  
   # create ZSS tree of query  
   zss_query = source_to_zss(query_text)
   
@@ -295,47 +320,6 @@ def parse_tree_similarity(yolo_result, query_path):
   top_n = 6 
   sorted(tree_dists, key=lambda x: x[1])
   return tree_dists[:top_n]
-
-# def parse_tree_similarity(img_bytes, query_path):
-#   # query_path : path to the query image which was downloaded from S3
-  
-#   # rem is list containing all formatting elements we want to remove
-#   formatting_elements_to_remove = ["\mathrm{", "\mathcal{", "\\text{", "\left", "\right"]
-
-#   # Get preprocessed LaTeX representation of query
-#   query_latex = image_to_latex_convert(query_path, query_bool=True)
-#   for elem in formatting_elements_to_remove :
-#         query_latex = preprocess_latex(query_latex, elem)
-  
-#   # Get a list of tuples of (MathPix OCR text of image, image filename)
-#   source_latex = []
-#   for img in img_bytes:
-#         latex_string = image_to_latex_convert(img, query_bool=True)
-#         for elem in formatting_elements_to_remove :
-#             latex_string = preprocess_latex(latex_string, elem)
-#         source_latex.append( (latex_string, filename) )
-
-#   #print("#3")
-
-#   # create ZSS tree of the query  
-#   zss_query = source_to_zss(query_latex)
-
-#   #print("#4")
-
-#   # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
-#   # each element in tree_dist is (latex_string, edit_dist_from_query, filename)
-#   tree_dists = []
-#   for eqn, filename in source_latex:
-#     print(filename)
-#     zss_tree = source_to_zss(eqn)
-#     dist = custom_edit_distance(zss_query, zss_tree)
-#     tree_dists.append((eqn, dist, filename))
-
-#   #print("#5")
-
-#   # sort equations by second element in tuple i.e. edit_dist_from_query
-#   # return equations with (top_n-1) smallest edit distances
-#   return tree_dists
 
 print("Finished parse_tree_similarity")
 
@@ -397,12 +381,13 @@ def lambda_handler(event, context):
           print("Sending to Sagemaker...")
           yolo_result = []
           os.chdir(png_converted_pdf_path+"_"+ pdf_name)
+          infer_start_time = time.time()
           for file in os.listdir(png_pdf_path):
-            # don't need to run LaTeX OCR on query.png
+            # don't need to run SageMaker on query.png
             if file == "query.png": continue
 
             print(f"Processing {file}")
-            #infer_start_time = time.time()
+            
             orig_image = cv2.imread(file)
             model_height, model_width = 640, 640
 
@@ -411,15 +396,15 @@ def lambda_handler(event, context):
 
             page_num = file.split(".")[0]
             yolo_result.append((predictor.predict(payload), page_num))
-            #infer_end_time = time.time()
-            #print(f"Inference Time = {infer_end_time - infer_start_time:0.4f} seconds")
+          infer_end_time = time.time()
+          print(f"Sagemaker Inference Time = {infer_end_time - infer_start_time:0.4f} seconds")
 
           print("Sagemaker results received!")
-          print(f"Length of Sagemaker results: {len(yolo_result)}")
+          print(f"Length of Sagemaker results: {len(yolo_result[0])}")
           print(yolo_result)
 
           top5_eqns = parse_tree_similarity(yolo_result=yolo_result, query_path=local_target)
-          print("LaTeX OCR ran, and tree similarity generated!")
+          print("MathPix API calls completed, and tree similarity generated!")
 
           page_nums_5 = sorted([page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns])
           top_5_eqns_info = [(page_num, eqn_num) for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
