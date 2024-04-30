@@ -1,5 +1,7 @@
 .latex-input-container {
   width: 100%;
+  position: relative;
+  /* Add this line */
 }
 
 .latex-input-content {
@@ -48,6 +50,32 @@ textarea.searchbar-full {
   color: #eee;
   font-size: 1.5em;
   padding: 20px;
+  margin-top: 10px;
+}
+
+.math-keyboard {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  background-color: #444;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.math-symbol-btn {
+  padding: 5px 10px;
+  margin: 5px;
+  background: #555;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.math-symbol-btn:hover,
+.math-symbol-btn:focus {
+  background: #666;
 }
 
 #MathPreview {}
