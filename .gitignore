@@ -20,7 +20,6 @@ simese_data/
 venv/
 ml-model/model.pt
 training_data/
-*.png
 im2latex/
 ml-model/model.pt
 simese_data/
