@@ -39,44 +39,50 @@ function LaTeXInput() {
 
   const [showKeyboard, setShowKeyboard] = useState(false);
 
-  const handleSymbolSelect = (latexSymbol) => {
-    const searchbarElem = document.getElementById("MathInput");
-    const startPos = searchbarElem.selectionStart;
-    const endPos = searchbarElem.selectionEnd;
-    const beforeCursor = text.substring(0, startPos);
-    const afterCursor = text.substring(endPos);
+  const handleSymbolSelect = (latex) => {
+    // Get a reference to the MathInput textarea
+    const inputArea = document.getElementById('MathInput');
+    const cursorPosition = inputArea.selectionStart;
 
-    let insertText = latexSymbol;
-    let cursorPos = startPos + insertText.length;
+    setText((prevText) => {
+      // Insert the LaTeX at the current cursor position
+      const newText =
+        prevText.slice(0, cursorPosition) +
+        latex +
+        prevText.slice(cursorPosition);
 
-    if (latexSymbol.includes("{}")) {
-      insertText = insertText.replace("{}", "{ }");
-      cursorPos = startPos + insertText.indexOf("{ ") + 1;
-    }
+      // Determine the position to set the cursor after inserting the LaTeX
+      const positions = [latex.indexOf('}'), latex.indexOf(')'), latex.indexOf(']')];
+      const validPositions = positions.map(pos => (pos === -1 ? latex.length : pos));
+      const firstClosingCharIndex = Math.min(...validPositions) + cursorPosition;
 
-    const newText = beforeCursor + insertText + afterCursor;
+      updatePreview();
 
-    // Set the new text and ensure the preview is updated after the state is set
-    setText(newText, () => {
-      // focus the searchbar and set the cursor position
-      searchbarElem.focus();
-      searchbarElem.setSelectionRange(cursorPos, cursorPos);
-      // Call updatePreview directly here to ensure it's called after the state update
-      updatePreview(newText);
+      // Set the cursor position after the preview is updated
+      setTimeout(() => {
+        if (inputArea) {
+          inputArea.focus();
+          // Place the cursor before the first closing character
+          inputArea.setSelectionRange(firstClosingCharIndex, firstClosingCharIndex);
+        }
+      }, 0);
+
+      return newText;
     });
   };
+
 
 
 
   const fetch = require('node-fetch');
 
   const updatePreview = () => {
-    const rawtext = document.getElementById("MathInput").value;
-    ReactDOM.render(
-      <BlockMath math={rawtext} />,
-      document.getElementById("MathPreview")
-    );
+    const previewElem = document.getElementById("MathPreview");
+    if (previewElem) {
+      ReactDOM.render(<BlockMath math={text} />, previewElem);
+    }
   };
+
 
   function cleanSVG(svgData) {
     const svgStart = svgData.indexOf('<svg');
@@ -263,6 +269,7 @@ function LaTeXInput() {
               placeholder="Try the Base Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
               id="MathInput"
               onKeyUp={updatePreview}
+              value={text}
               onChange={handleChange}
               onFocus={handleFocus}
               onBlur={handleBlur}
