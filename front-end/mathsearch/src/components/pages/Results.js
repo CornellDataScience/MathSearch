@@ -120,12 +120,16 @@ const Results = () => {
       ws.send(message);
     };
 
-    ws.onmessage = (message) => {
-      console.log('WebSocket Message:', message.data);
+    ws.onmessage = (event) => {
+      console.log('WebSocket Message:', event.data);
       // Handle incoming messages
       // Assuming 'message' has a 'type' property to dictate actions
       console.log('Start Fetch')
-      fetchData();
+      const message = JSON.parse(event.data);
+      if (message.type === "PDF_PROCESSING_COMPLETE") {
+        console.log("Results are ready:", message.message);
+        fetchData();
+      }
     };
 
     ws.onerror = (error) => {
@@ -144,9 +148,8 @@ const Results = () => {
         console.log(pdfDownloaded);
         console.log(jsonDownloaded);
         downloadRequest(uuid);
-      } else {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     // Clean up on unmount
