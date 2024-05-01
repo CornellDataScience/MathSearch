@@ -289,7 +289,7 @@ function LaTeXInput() {
           </div>
           {/* Render the MathKeyboard here */}
           <MathKeyboard onSymbolSelect={handleSymbolSelect} isVisible={showKeyboard} />
-        </div>
+        </div >
         {/* End of latex-input-content */}
 
         {/* Math output preview */}
@@ -298,7 +298,7 @@ function LaTeXInput() {
         </div>
 
         {/* File upload input */}
-        <div className="file-upload-container">
+        <div style={{ marginTop: '20px' }} className="file-upload-container">
           <input
             className="form-control"
             type="file"
