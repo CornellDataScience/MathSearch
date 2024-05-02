@@ -157,7 +157,7 @@ def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucke
         Bucket=BUCKET, Key="inputs/"+pdf_name, Filename=local_pdf
     )
     
-    images = pdf2image.convert_from_path(local_pdf, dpi = 500)
+    images = pdf2image.convert_from_path(local_pdf, dpi=300) # MAKE THESE CHANGES
     
     # create directory to put the converted pngs into
     subprocess.run(f'mkdir -p {png_converted_pdf_path}_{pdf_name}', shell=True)
@@ -251,7 +251,6 @@ def final_output(pdf_name, bounding_boxes):
 
 print("Finished final_output")
 
-
 # Store string repr. of LaTeX equation and its page number in list
 def parse_tree_similarity(yolo_result, query_path):
   # list containing all formatting elements we want to remove
@@ -267,7 +266,13 @@ def parse_tree_similarity(yolo_result, query_path):
   equations_list = []
   for dict_elem, page_num in yolo_result:
     eqn_num = 1
-    for img_array in dict_elem["cropped_ims"]:
+    
+    for i in range(len(dict_elem["cropped_ims"])):
+      # skip in-line equation
+      if dict_elem["boxes"][i][4] > 0:
+        continue
+
+      img_array = dict_elem["cropped_ims"][i]
       try:
         image = Image.fromarray(np.array(img_array, dtype=np.uint8))
         byte_stream = io.BytesIO()
@@ -282,29 +287,10 @@ def parse_tree_similarity(yolo_result, query_path):
       except Exception as e:
         print(f"Failed to process image or convert to LaTeX: {e}")
       eqn_num += 1
-
-  # equations_list = []
-  # for dict_elem, page_num in yolo_result:
-  #   eqn_num = 1
-  #   for img_elem in dict_elem["cropped_ims"]:
-  #     print(f"img_elem {img_elem}")
-  #     print(f"type of img_elem {type(img_elem)}")
-
-  #     #byte_elem = np.array(byte_elem).tobytes()
-  #     byte_elem = bytes(img_elem)
-  #     print(f"type of byte_elem {type(byte_elem)}")
-  #     #print(img_elem)
-  #     latex_string = image_to_latex_convert(byte_elem, query_bool=False)
-  #     print(f"{eqn_num} on {page_num}: {latex_string}")
-
-  #     # ENTER CODE FROM ML SUB-TEAM to edit the latex string
-  #     # editing the escape_chars and preprocess_latex function
-  #     equations_list.append((latex_string, page_num, eqn_num))
-  #     eqn_num += 1 # increment equation num
     
   print("Finished all MathPix API calls!")
   
-  # create ZSS tree of query  
+  # create ZSS tree of query
   zss_query = source_to_zss(query_text)
   
   # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
