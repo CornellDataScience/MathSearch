@@ -62,10 +62,10 @@ const Results = () => {
         region: REGION,
       });
 
-      // const fileKey = uuid + ".pdf";
-      const fileKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6.pdf";
-      // const jsonKey = uuid + "_results.json";
-      const jsonKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6" + "_results.json";
+      const fileKey = uuid + ".pdf";
+      // const fileKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6.pdf";
+      const jsonKey = uuid + "_results.json";
+      // const jsonKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6" + "_results.json";
 
       console.log(S3_OUTPUT_BUCKET);
 
