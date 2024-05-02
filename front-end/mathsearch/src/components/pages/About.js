@@ -76,6 +76,44 @@ function App() {
 
             <section className="team-section-content">
 
+              <section className="member column">
+                <ul className="team-list">
+                  <b>Current team members:</b>
+                  <li>Aarav Khanna</li>
+                  <li>Audrey Wang</li>
+                  <li>Cade Jin</li>
+                  <li>Deniz BT</li>
+                  <li>Eric Do</li>
+                  <li>Jake Silver</li>
+                  <li>Jerry Chen</li>
+                  <li>Katie Zelvin</li>
+                  <li>Lin Ming Chang</li>
+                  <li>Mahitha Penmetsa</li>
+                  <li>Mericel Tao</li>
+                  <li>Minhaj Fahad</li>
+                  <li>Noah Plant</li>
+                  <li>Peter Favero</li>
+                  <li>Ryan Lee</li>
+                  <li>Travis Zhang</li>
+                </ul>
+              </section>
+
+
+              <section className="member column">
+                <ul className="team-list">
+                  <b>Past team members (FA24):</b>
+                  <li>Jake Silver</li>
+                  <li>Andrea Siby</li>
+                  <li>Cade Jin</li>
+                  <li>Deniz BT</li>
+                  <li>Emerald Liu</li>
+                  <li>Jason Zheng</li>
+                  <li>Jerry Chen</li>
+                  <li>Katie Zelvin</li>
+                  <li>Pun Chalxanien</li>
+                  <li>Travis Zhang</li>
+                </ul>
+              </section>
 
               <section className="member column">
                 <ul className="team-list">
@@ -92,21 +130,7 @@ function App() {
                   <li>Vivian Chen</li>
                 </ul>
               </section>
-              <section className="member column">
-                <ul className="team-list">
-                  <b>Current team members:</b>
-                  <li>Jake Silver</li>
-                  <li>Andrea Siby</li>
-                  <li>Cade Jin</li>
-                  <li>Deniz BT</li>
-                  <li>Emerald Liu</li>
-                  <li>Jason Zheng</li>
-                  <li>Jerry Chen</li>
-                  <li>Katie Zelvin</li>
-                  <li>Pun Chalxanien</li>
-                  <li>Travis Zhang</li>
-                </ul>
-              </section>
+
               <section className="member column">
                 <ul className="team-list">
                   <b>Past team members (SP23):</b>
@@ -115,6 +139,7 @@ function App() {
                   <li>Johann Lee</li>
                 </ul>
               </section>
+
             </section>
 
           </section>

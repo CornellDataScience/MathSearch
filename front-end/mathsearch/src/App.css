@@ -47,6 +47,7 @@
 /* App.css */
 
 .App {
+
   font-family: Arial, sans-serif;
 }
 
@@ -56,34 +57,33 @@
   /* Changed header color to dark */
   padding: 30px 0;
   text-align: center;
+
 }
 
 body {
+
   font-family: "Montserrat", sans-serif;
   /* Change the font family here */
 
 }
 
-
 .App-main {
+
   display: flex;
   flex-direction: column;
-
-
   text-align: center;
   /* Align text inside the main container */
-
 }
 
 .mission-section {
+
   background-image: url('../public/background.png');
   background-size: cover;
   display: flex;
   align-items: center;
   flex-direction: row;
+
 }
-
-
 
 .mission-text {
 
@@ -91,32 +91,35 @@ body {
   padding-left: 10%;
   padding-right: 10%;
   padding-bottom: 130px;
-
   color: white;
   width: 50%;
   text-align: left;
-
 }
 
 h1 {
+
   font-size: 60px;
 
 }
 
 h2 {
+
   font-size: 42px;
 }
 
 h3 {
+
   font-size: 48px;
 }
 
 p {
+
   font-size: 24px;
 
 }
 
 li {
+
   font-size: 22px;
 }
 
@@ -124,9 +127,11 @@ li {
 
   width: 50%;
   align-items: center;
+
 }
 
 .mission-image img {
+
   padding-top: 100px;
   padding-bottom: 100px;
   width: 70%;
@@ -135,12 +140,14 @@ li {
 
 .problem {
 
+  padding-top: 5%;
+  padding-bottom: 5%;
   display: flex;
   flex-direction: row;
-
 }
 
 .problem-left {
+
   animation: fadeIn 1s ease-in forwards;
   width: 50%;
   text-align: left;
@@ -151,6 +158,7 @@ li {
 }
 
 .problem-right {
+
   animation: fadeIn 1s ease-in forwards;
   width: 50%;
   text-align: left;
@@ -160,32 +168,29 @@ li {
   margin-right: 15%;
 }
 
-
 .dot-list {
+
   list-style-type: disc;
 }
 
-
 .features {
+
   background-image: url('../public/background.png');
   background-size: cover;
   color: white;
   align-items: center;
-
+  padding-top: 5%;
 }
 
 .features-content {
 
   display: flex;
-
   justify-content: center;
   /* Center horizontally */
-
   align-items: center;
   flex-direction: row;
   padding-top: 100px;
   padding-bottom: 100px;
-
 }
 
 .step {
@@ -193,38 +198,30 @@ li {
   width: 250px;
   margin-left: 5%;
   margin-right: 5%;
-
 }
 
-
-
-
-
-
-
 .team-section {
-
-
 
   background-color: rgb(230, 230, 230);
   text-align: center;
   align-items: center;
-
+  padding-top: 5%;
 }
 
 .team-section-content {
-  display: flex;
 
+  display: flex;
   padding: 10px 0;
   justify-content: center;
-
-
 }
 
 .team-list {
+
   list-style: none;
-  margin-left: 100px;
-  margin-right: 100px;
+  margin-left: 50px;
+  margin-right: 50px;
+  padding: 0;
+  /* Remove default padding */
 }
 
 .team-list li {
@@ -239,25 +236,114 @@ li {
   padding: 20px 0;
 }
 
-
 @media screen and (max-width: 600px) {
-  .mission-section {
-    flex-direction: column;
-    /* Change to vertical stacking on small screens */
-  }
 
   .problem {
+
     flex-direction: column;
   }
 
   .features-content {
+
     flex-direction: column;
+    justify-content: center;
+    /* Center horizontally */
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 50px;
 
   }
 
   .team-section-content {
-    flex-direction: column;
 
+    flex-direction: column;
+    padding: 0px;
   }
 
+  .mission-text {
+
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-bottom: 0px;
+    width: 90%;
+  }
+
+  .mission-section {
+
+    flex-direction: column;
+    /* Change to vertical stacking on small screens */
+    align-items: left;
+    padding-top: 50px;
+    padding-bottom: 20px;
+  }
+
+  .mission-image img {
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 70%;
+  }
+
+  .problem-left {
+
+    animation: fadeIn 1s ease-in forwards;
+    width: 80%;
+    text-align: left;
+    padding-top: 0px;
+    padding-bottom: 10px;
+    margin-left: 10%;
+    margin-right: 10%;
+  }
+
+  .problem-right {
+
+    animation: fadeIn 1s ease-in forwards;
+    width: 80%;
+    text-align: left;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-left: 10%;
+    margin-right: 10%;
+  }
+
+  h1 {
+
+    font-size: 60px;
+  }
+
+  h2 {
+
+    font-size: 30px;
+  }
+
+  h3 {
+
+    font-size: 30px;
+  }
+
+  p {
+
+    font-size: 20px;
+  }
+
+  li {
+
+    font-size: 20px;
+  }
+
+  .team-list li {
+
+    margin: 10px;
+    font-size: 12px;
+  }
+
+  .step {
+
+    width: 250px;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding: 1%;
+    margin-top: 10%;
+    border: 2px solid #ccc;
+  }
 }
