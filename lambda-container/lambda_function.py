@@ -157,7 +157,7 @@ def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucke
         Bucket=BUCKET, Key="inputs/"+pdf_name, Filename=local_pdf
     )
     
-    images = pdf2image.convert_from_path(local_pdf)
+    images = pdf2image.convert_from_path(local_pdf, dpi = 500)
     
     # create directory to put the converted pngs into
     subprocess.run(f'mkdir -p {png_converted_pdf_path}_{pdf_name}', shell=True)
