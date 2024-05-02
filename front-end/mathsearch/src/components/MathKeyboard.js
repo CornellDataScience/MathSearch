@@ -10,7 +10,6 @@ function MathKeyboard({ onSymbolSelect, isVisible }) {
     { label: '√', latex: '\\sqrt{}' },
     { label: 'n√', latex: '\\sqrt[n]{}' },
     { label: 'x²', latex: '{x}^{2}' },
-    { label: 'x²', latex: '{x}^{2}' },
     { label: 'xʸ', latex: '{x}^{y}' },
     { label: 'ₓ√y', latex: '\\sqrt[x]{y}' },
     { label: 'log', latex: '\\log{}' },
