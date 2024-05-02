@@ -157,7 +157,7 @@ def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucke
         Bucket=BUCKET, Key="inputs/"+pdf_name, Filename=local_pdf
     )
     
-    images = pdf2image.convert_from_path(local_pdf, dpi=300) # MAKE THESE CHANGES
+    images = pdf2image.convert_from_path(local_pdf, dpi=500)
     
     # create directory to put the converted pngs into
     subprocess.run(f'mkdir -p {png_converted_pdf_path}_{pdf_name}', shell=True)
@@ -251,42 +251,69 @@ def final_output(pdf_name, bounding_boxes):
 
 print("Finished final_output")
 
-# Store string repr. of LaTeX equation and its page number in list
-def parse_tree_similarity(yolo_result, query_path):
-  # list containing all formatting elements we want to remove
 
+# Store string repr. of LaTeX equation and its page number in list
+def parse_tree_similarity(yolo_result, query_path, pdf_name):
   with open(query_path, "rb") as f:
-      data = f.read()
-      query_text = image_to_latex_convert(data, query_bool=True)
+    data = f.read()
+    query_text = image_to_latex_convert(data, query_bool=True)
   query_text.replace(" ", "")
   print(f"query_text: {query_text}")
-
-  # ADD code to pre-process query string (from ML subteam)
       
   equations_list = []
   for dict_elem, page_num in yolo_result:
     eqn_num = 1
     
-    for i in range(len(dict_elem["cropped_ims"])):
-      # skip in-line equation
-      if dict_elem["boxes"][i][4] > 0:
-        continue
+    for bboxes in dict_elem["boxes"]:
+      # skip in-line equation (CHANGE THIS BECAUSE IT IS SKIPPING EVERYTHING)
+      # if bboxes[4] > 0.0:
+      #   continue
+      
+      IMG_OUT_DIR = f"/tmp/cropped_imgs_{pdf_name}/"
+      subprocess.run(["rm", "-rf", IMG_OUT_DIR])
+      subprocess.run(["mkdir", "-p", IMG_OUT_DIR])
 
-      img_array = dict_elem["cropped_ims"][i]
-      try:
-        image = Image.fromarray(np.array(img_array, dtype=np.uint8))
-        byte_stream = io.BytesIO()
-        image.save(byte_stream, format='PNG')  # Save the image to a byte stream
-        byte_stream.seek(0)
-        img_bytes = byte_stream.read()
-    
-        # Assuming image_to_latex_convert can directly handle byte array of an image
-        latex_string = image_to_latex_convert(img_bytes, query_bool=False)
-        print(f"{eqn_num} on {page_num}: {latex_string}")
-        equations_list.append((latex_string, page_num, eqn_num))
-      except Exception as e:
-        print(f"Failed to process image or convert to LaTeX: {e}")
+      crop_path = IMG_OUT_DIR + "_p"+ str(page_num) + "_e" + str(eqn_num) + ".png"
+      page_png_path = f"/tmp/converted_pdfs_{pdf_name}/" + str(page_num) + ".png"
+      model_width, model_height = 640,640
+      image = Image.open(page_png_path).convert('RGB')
+      width, height = image.size
+      x_ratio, y_ratio = width/model_width, height/model_height
+
+      # crop from original iamge, and send that to MathPix
+      x1, y1, x2, y2, _, _ = bboxes
+      x1, x2 = int(x_ratio*x1), int(x_ratio*x2)
+      y1, y2 = int(y_ratio*y1), int(y_ratio*y2)
+      # CROP
+      cropped_image = image.crop((x1, y1, x2, y2))  
+      cropped_image.save(crop_path)
+        
+      latex_string = image_to_latex_convert(open(crop_path, "rb"), query_bool=False)
+      print(f"{eqn_num} on {page_num}: {latex_string}")
+      equations_list.append((latex_string, page_num, eqn_num))
+      
       eqn_num += 1
+
+    # for i in range(len(dict_elem["cropped_ims"])):
+    #   # skip in-line equation (CHANGE THIS BECAUSE IT IS SKIPPING EVERYTHING)
+    #   if dict_elem["boxes"][i][4] > 0:
+    #     continue
+
+    #   img_array = dict_elem["cropped_ims"][i]
+    #   try:
+    #     image = Image.fromarray(np.array(img_array, dtype=np.uint8))
+    #     byte_stream = io.BytesIO()
+    #     image.save(byte_stream, format='PNG')  # Save the image to a byte stream
+    #     byte_stream.seek(0)
+    #     img_bytes = byte_stream.read()
+    
+    #     # Assuming image_to_latex_convert can directly handle byte array of an image
+    #     latex_string = image_to_latex_convert(img_bytes, query_bool=False)
+    #     print(f"{eqn_num} on {page_num}: {latex_string}")
+    #     equations_list.append((latex_string, page_num, eqn_num))
+    #   except Exception as e:
+    #     print(f"Failed to process image or convert to LaTeX: {e}")
+    #   eqn_num += 1
     
   print("Finished all MathPix API calls!")
   
@@ -389,7 +416,7 @@ def lambda_handler(event, context):
           print(f"Length of Sagemaker results: {len(yolo_result[0])}")
           print(yolo_result)
 
-          top5_eqns = parse_tree_similarity(yolo_result=yolo_result, query_path=local_target)
+          top5_eqns = parse_tree_similarity(yolo_result=yolo_result, query_path=local_target, pdf_name=pdf_name)
           print("MathPix API calls completed, and tree similarity generated!")
 
           page_nums_5 = sorted([page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns])
