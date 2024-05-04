@@ -5,9 +5,9 @@ import json
 import dataHandler
 import subprocess
 import os
-import sympy as sp
-from sympy.parsing.latex import parse_latex
-from zss import Node, distance
+#import sympy as sp
+#from sympy.parsing.latex import parse_latex
+#from zss import Node, distance
 import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
@@ -16,83 +16,30 @@ from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
-import io
-import numpy as np
+#import io
+#import numpy as np
 import time
+import Levenshtein
 
 print("Finished imports")
 
 # Initialize S3 client
 s3 = boto3.client('s3')
 
-def preprocess_latex(latex_src, rem):
-  """
-  latex_src: string of LaTeX source code to pre-process
-  rem: string of formatting element which we want to remove from latex_src. includes opening curly brace. ex. \mathrm{
-  """
-  final_string = latex_src
-  format_index = latex_src.find(rem)
-  while format_index != -1:
-    # iterate through string until you find the right closing curly brace to remove
-    index = format_index + len(rem)
-    closing_brace = -1
-    num_opening = 0
-    while index < len(final_string):
-      if final_string[index:index+1] == "{":
-        num_opening += 1
-      elif final_string[index:index+1] == "}":
-        if num_opening == 0:
-          closing_brace = index
-          break
-        else:
-          num_opening -= 1
-      index += 1
 
-    # entering this if statement means something went wrong.
-    # nothing is removed in this case
-    if closing_brace == -1:
-      return final_string
-
-    final_string = final_string[:format_index]+final_string[format_index+len(rem):closing_brace]+final_string[closing_brace+1:]
-    format_index = final_string.find(rem)
+def levenshtein_distance(query_string, latex_list, top_n):
+  # elem of latex_list is (latex string, page num, eqn num)
+  ranked_list = []
+  n = len(latex_list)
+  for i in range(n):
+    latex1 = latex_list[i][0] # string is first element 
   
-  return final_string
-
-print("Finished preprocess_latex")
-
-# Parses sympy expression into Zss tree
-def sympy_to_zss(expr):
-    if isinstance(expr, sp.Symbol) or isinstance(expr, sp.Number):
-        return Node(str(expr))
-    else:
-        full_class_str = str(expr.func)
-        class_name = full_class_str.split('.')[-1].rstrip("'>")
-        node = Node(class_name)
-        for arg in expr.args:
-            child_node = sympy_to_zss(arg)
-            node.addkid(child_node)
-    return node
-
-print("Finished sympy_to_zss")
-
-# Input is string of LaTeX source code. Runs sympy parser and ZSS tree parser.
-# Returns parsed ZSS tree.
-def source_to_zss(latex_expr):
-    try:
-        sympy_expr = parse_latex(latex_expr)
-        zss_tree = sympy_to_zss(sympy_expr)
-        return zss_tree
-    except:
-        return Node("ERROR")
-
-print("Finished source_to_zss")
-        
-# used in ZSS tree edit distance
-def custom_edit_distance(query_tree, other_tree):
-    return distance(query_tree, other_tree, get_children=Node.get_children,
-        insert_cost=lambda node: 10, remove_cost=lambda node: 10, update_cost=lambda a, b: 1)
-
-print("Finished custom_edit_distance")
+    similarity_score = Levenshtein.distance(latex1, query_string)
+    ranked_list.append((latex_list[i][0], latex_list[i][1], latex_list[i][2], similarity_score))
+  
+  # Sort based on similarity score
+  ranked_list.sort(key=lambda x: x[3])
+  return ranked_list[:top_n]
 
 # Returns a well-formatted LaTeX string represent the equation image 'image'
 # Makes the MathPix API call
@@ -176,7 +123,7 @@ def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucke
 print("Finished download_files")
 
 # Call draw_bounding_box on each PNG page of PDF
-def draw_bounding_box(image_path_in, bounding_boxes, image_path_out):
+def draw_bounding_box(image_path_in, bounding_boxes):
   """"
   image_path_in : path to PNG which represents page from pdf
   bounding_boxes: list of list of bounding boxes
@@ -195,8 +142,9 @@ def draw_bounding_box(image_path_in, bounding_boxes, image_path_out):
     y1, y2 = int(y_ratio*y1), int(y_ratio*y2)
     draw.rectangle(xy=(x1, y1, x2, y2), outline=SKYBLUE, width=6)
   
+  return image
   # save img as pdf
-  image.save(image_path_out[:-4]+".pdf")
+  #image.save(image_path_out[:-4]+".pdf")
 
 print("Finished draw_bounding_box")
 
@@ -215,59 +163,60 @@ def final_output(pdf_name, bounding_boxes):
   subprocess.run(["mkdir", "-p", PDF_OUT_DIR])
 
   pdf_in = PDF_IN_DIR + pdf_name + ".pdf"
-  pdf_out = PDF_OUT_DIR + pdf_name[:-4]+".pdf"
-  pdf_no_ext = pdf_name[:-4]
+  pdf_out = PDF_OUT_DIR + pdf_name[:-4]+"_pdf"
+  #pdf_no_ext = pdf_name[:-4]
 
   result_pages = list(bounding_boxes.keys())
-  print(result_pages)
-  # call draw_bounding_boxes for each png page, save to IMG_OUT_DIR
-  for i in result_pages:
-    image_path_in = IMG_IN_DIR + str(i) + ".png"
-    image_path_out = IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".png"
-    # pass in list of bounding boxes for each page
-    draw_bounding_box(image_path_in, bounding_boxes[i], image_path_out)
-    #s3.upload_file(image_path_out[:-4]+".pdf", OUTPUT_BUCKET, str(i) + ".pdf")
-  print("drew bounding boxes!")
+  print("bounding boxes dict: ", bounding_boxes)
 
+  # call "draw_bounding_boxes" for each png page, save to IMG_OUT_DIR
   # merge the rendered images (with bounding boxes) to the pdf, and upload to S3
-  with open(pdf_in, 'rb') as file:
-    with open(pdf_out, 'wb') as pdf_out_file:
-      pdf = PyPDF2.PdfReader(file)
-      output = PyPDF2.PdfWriter()
-      for i, page in enumerate(pdf.pages):
-        if str(i) in result_pages:
-          new_page = PyPDF2.PdfReader(IMG_OUT_DIR + pdf_no_ext + "_"+ str(i) + ".pdf").pages[0]
-          new_page.scale_by(0.36)
-          output.add_page(new_page)
+  pages = []
+  with open(pdf_in, 'rb') as file: 
+    pdf = PyPDF2.PdfReader(file)
+    for i, page in enumerate(pdf.pages):
+        image_path_in = IMG_IN_DIR + str(i) + ".png"
+        if str(i) in result_pages:  
+          # pass in list of bounding boxes for each page
+          img = draw_bounding_box(image_path_in, bounding_boxes[str(i)])
+          pages.append(img)
         else:
-          output.add_page(page)
-      output.write(pdf_out_file)
-    
-    try:
-      s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_name[:-4]+".pdf")
-      print(f"merged final pdf, uploaded {pdf_out} to {OUTPUT_BUCKET}")
-    except:
-      raise Exception("Upload failed")
+          img = Image.open(image_path_in).convert('RGB')
+          pages.append(img)
+  pages[0].save(pdf_out, save_all=True, append_images=pages[1:])
+  
+  try:
+    s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_out)
+    print(f"merged final pdf, uploaded {pdf_out} to {OUTPUT_BUCKET}")
+  except:
+    raise Exception("Upload failed")
 
 print("Finished final_output")
 
-
 # Store string repr. of LaTeX equation and its page number in list
-def parse_tree_similarity(yolo_result, query_path, pdf_name):
+def rank_eqn_similarity(yolo_result, query_path, pdf_name):
   with open(query_path, "rb") as f:
     data = f.read()
     query_text = image_to_latex_convert(data, query_bool=True)
-  query_text.replace(" ", "")
+  query_text = query_text.replace(" ", "")
   print(f"query_text: {query_text}")
       
   equations_list = []
   for dict_elem, page_num in yolo_result:
     eqn_num = 1
     
+    total_eqns = 0
+    skipped_eqns = 0
     for bboxes in dict_elem["boxes"]:
-      # skip in-line equation (CHANGE THIS BECAUSE IT IS SKIPPING EVERYTHING)
-      # if bboxes[4] > 0.0:
-      #   continue
+      total_eqns += 1
+      # crop from original iamge, and send that to MathPix
+      x1, y1, x2, y2, _, label = bboxes
+
+      # skip in-line equations (not skipping everything, but not sure if its correct)
+      if label > 0.0:
+        eqn_num += 1
+        skipped_eqns += 1
+        continue
       
       IMG_OUT_DIR = f"/tmp/cropped_imgs_{pdf_name}/"
       subprocess.run(["rm", "-rf", IMG_OUT_DIR])
@@ -280,59 +229,27 @@ def parse_tree_similarity(yolo_result, query_path, pdf_name):
       width, height = image.size
       x_ratio, y_ratio = width/model_width, height/model_height
 
-      # crop from original iamge, and send that to MathPix
-      x1, y1, x2, y2, _, _ = bboxes
+      # CROP original PNG with yolo bounding box coordinates
       x1, x2 = int(x_ratio*x1), int(x_ratio*x2)
       y1, y2 = int(y_ratio*y1), int(y_ratio*y2)
-      # CROP
       cropped_image = image.crop((x1, y1, x2, y2))  
       cropped_image.save(crop_path)
-        
+      
       latex_string = image_to_latex_convert(open(crop_path, "rb"), query_bool=False)
+      latex_string = latex_string.replace(" ", "")
       print(f"{eqn_num} on {page_num}: {latex_string}")
       equations_list.append((latex_string, page_num, eqn_num))
-      
       eqn_num += 1
-
-    # for i in range(len(dict_elem["cropped_ims"])):
-    #   # skip in-line equation (CHANGE THIS BECAUSE IT IS SKIPPING EVERYTHING)
-    #   if dict_elem["boxes"][i][4] > 0:
-    #     continue
-
-    #   img_array = dict_elem["cropped_ims"][i]
-    #   try:
-    #     image = Image.fromarray(np.array(img_array, dtype=np.uint8))
-    #     byte_stream = io.BytesIO()
-    #     image.save(byte_stream, format='PNG')  # Save the image to a byte stream
-    #     byte_stream.seek(0)
-    #     img_bytes = byte_stream.read()
-    
-    #     # Assuming image_to_latex_convert can directly handle byte array of an image
-    #     latex_string = image_to_latex_convert(img_bytes, query_bool=False)
-    #     print(f"{eqn_num} on {page_num}: {latex_string}")
-    #     equations_list.append((latex_string, page_num, eqn_num))
-    #   except Exception as e:
-    #     print(f"Failed to process image or convert to LaTeX: {e}")
-    #   eqn_num += 1
+    print(f"page {page_num}: skipped {skipped_eqns} in-line eqns, out of {total_eqns}.")
     
   print("Finished all MathPix API calls!")
-  
-  # create ZSS tree of query
-  zss_query = source_to_zss(query_text)
-  
-  # now parse all LaTeX source code into ZSS tree and compute edit distance with query for every equation
-  # each element in tree_dist is (latex_string, edit_dist_from_query, page_num, eqn_num)
-  tree_dists = []
-  for eqn, page_num, eqn_num in equations_list:
-    zss_tree = source_to_zss(eqn)
-    dist = custom_edit_distance(zss_query, zss_tree)
-    tree_dists.append((eqn, dist, page_num, eqn_num))
 
   # sort equations by second element in tuple i.e. edit_dist_from_query
-  # return equations with (top_n-1) smallest edit distances
-  top_n = 6 
-  sorted(tree_dists, key=lambda x: x[1])
-  return tree_dists[:top_n]
+  # return equations with top_n smallest edit distances
+  top_n = 5
+  sorted_lst = levenshtein_distance(query_string=query_text, latex_list=equations_list, top_n=top_n)
+  print("most similar eqns: ", sorted_lst)
+  return sorted_lst
 
 print("Finished parse_tree_similarity")
 
@@ -416,11 +333,12 @@ def lambda_handler(event, context):
           print(f"Length of Sagemaker results: {len(yolo_result[0])}")
           print(yolo_result)
 
-          top5_eqns = parse_tree_similarity(yolo_result=yolo_result, query_path=local_target, pdf_name=pdf_name)
+          top5_eqns = rank_eqn_similarity(yolo_result=yolo_result, query_path=local_target, pdf_name=pdf_name)
           print("MathPix API calls completed, and tree similarity generated!")
 
-          page_nums_5 = sorted([page_num for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns])
-          top_5_eqns_info = [(page_num, eqn_num) for (latex_string, edit_dist, page_num, eqn_num) in top5_eqns]
+          page_nums_5 = sorted([page_num for (latex_string, page_num, eqn_num, dist) in top5_eqns])
+          top_5_eqns_info = [(page_num, eqn_num) for (latex_string, page_num, eqn_num, dist) in top5_eqns]
+          #print("top_5_eqns_info ", top_5_eqns_info)
 
           # get bboxes for top5 equations
           bboxes_dict = {}
@@ -428,7 +346,6 @@ def lambda_handler(event, context):
             # don't draw bounding boxes on pages that don't have top 5 equation
             if page_num not in page_nums_5:
               continue
-
             count = 1
             for bboxes in dict_elem["boxes"]:
               # only collect bounding boxes from top 5 equation
@@ -439,18 +356,21 @@ def lambda_handler(event, context):
                   bboxes_dict[page_num] = [bboxes[:4]]
               count += 1
             
+          # draws the bounding boxes for the top 5 equations and converts pages back to PDF
+          # final PDF with bounding boxes saved in directory pdf_out
+          final_output(pdf_name, bboxes_dict)
+
           # return JSON with the following keys
           # id: UUID
           # pdf : path / pdf name
           # pages : list of page numbers sorted in order of most to least similar to query []
           # bbox: list of tuples (page_num, [list of equation label + four coordinates of bounding box])
-          pages = sorted(page_nums_5)
+          #pages = sorted(page_nums_5)
           json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
-                        "id": uuid, "pdf": pdf_name, "pages": pages, "bbox": bboxes}
+                        "id": uuid, "pdf": pdf_name, "pages": page_nums_5, "bbox": bboxes}
+          # json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
+          #               "id": uuid, "pdf": pdf_name, "pages": page_nums_5}
             
-          # draws the bounding boxes for the top 5 equations and converts pages back to PDF
-          # final PDF with bounding boxes saved in directory pdf_out
-          final_output(pdf_name, bboxes_dict)
           print(f"final json_result {json_result}")
       
       # Dequeue from SQS
