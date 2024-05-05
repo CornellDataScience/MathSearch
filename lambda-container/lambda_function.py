@@ -5,7 +5,7 @@ import json
 import dataHandler
 import subprocess
 import os
-import PyPDF2
+#import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
 import cv2
@@ -13,10 +13,9 @@ from sagemaker.pytorch import PyTorchPredictor
 from sagemaker.deserializers import JSONDeserializer
 import traceback
 import requests
-#import io
-#import numpy as np
 import time
 import Levenshtein
+from fpdf import FPDF
 print("Finished imports")
 
 # Initialize S3 client
@@ -65,7 +64,7 @@ def image_to_latex_convert(image, query_bool):
        
     # Check if the request was successful
     if response.status_code == 200:
-        print("Successful API call!!")
+        #print("Successful API call!!")
         response_data = response.json()
         #print(json.dumps(response_data, indent=4, sort_keys=True))  # Print formatted JSON response
         return response_data.get("latex_styled", "")  # Get the LaTeX representation from the response, safely access the key
@@ -139,9 +138,9 @@ def draw_bounding_box(image_path_in, bounding_boxes):
     x1, x2 = int(x_ratio*x1), int(x_ratio*x2)
     y1, y2 = int(y_ratio*y1), int(y_ratio*y2)
     if rank == 0: 
-      draw.rectangle(xy=(x1, y1, x2, y2), outline=GREEN, width=6)
+      draw.rectangle(xy=(x1, y1, x2, y2), outline=GREEN, width=8)
     else:
-      draw.rectangle(xy=(x1, y1, x2, y2), outline=YELLOW, width=6)
+      draw.rectangle(xy=(x1, y1, x2, y2), outline=YELLOW, width=8)
   
   return image
   # save img as pdf
@@ -149,7 +148,7 @@ def draw_bounding_box(image_path_in, bounding_boxes):
 
 #print("Finished draw_bounding_box")
 
-def final_output(pdf_name, bounding_boxes):
+def final_output(pdf_name, png_pdf_path, bounding_boxes):
   """
   bounding_boxes : dict with keys page numbers, and values (list of bounding boxes, eqn rank)
   """
@@ -173,23 +172,36 @@ def final_output(pdf_name, bounding_boxes):
 
   # call "draw_bounding_boxes" for each png page, save to IMG_OUT_DIR
   # merge the rendered images (with bounding boxes) to the pdf, and upload to S3
-  RESIZE_FACTOR = 0.25
-  RESAMPLE_ALGO = Image.Resampling.LANCZOS
-  pages = []
-  with open(pdf_in, 'rb') as file: 
-    pdf = PyPDF2.PdfReader(file)
-    for i, page in enumerate(pdf.pages):
-        image_path_in = IMG_IN_DIR + str(i) + ".png"
-        if str(i) in result_pages:  
-          # pass in list of bounding boxes for each page
-          img = draw_bounding_box(image_path_in, bounding_boxes[str(i)])
-        else:
-          img = Image.open(image_path_in).convert('RGB')
+  paths = sorted(os.listdir(png_pdf_path))
+  pdf = FPDF()
+  for i in range(len(paths)-1):
+    #print(f"adding {paths[i]}")
+    if str(i) in result_pages:  
+      img = draw_bounding_box(paths[i], bounding_boxes[str(i)])
+      img.save(paths[i])
+    
+    pdf.add_page()
+    pdf.image(paths[i], 0, 0, 210, 297) # A4 paper sizing
+  pdf.output(pdf_out, "F")
+
+  # RESIZE_FACTOR = 0.25
+  # RESAMPLE_ALGO = Image.Resampling.LANCZOS
+  # pages = []
+  # with open(pdf_in, 'rb') as file: 
+  #   pdf = PyPDF2.PdfReader(file)
+  #   for i, page in enumerate(pdf.pages):
+  #       image_path_in = IMG_IN_DIR + str(i) + ".png"
+  #       if str(i) in result_pages:  
+  #         # pass in list of bounding boxes for each page
+  #         img = draw_bounding_box(image_path_in, bounding_boxes[str(i)])
+  #       else:
+  #         img = Image.open(image_path_in).convert('RGB')
         
-        w, h = img.size
-        resized_image = img.resize((int(w*RESIZE_FACTOR), int(h*RESIZE_FACTOR)), resample=RESAMPLE_ALGO)
-        pages.append(resized_image)
-  pages[0].save(pdf_out, save_all=True, append_images=pages[1:], format="PDF")
+  #       w, h = img.size
+  #       resized_image = img.resize((int(w*RESIZE_FACTOR), int(h*RESIZE_FACTOR)), resample=RESAMPLE_ALGO)
+  #       pages.append(resized_image)
+
+  # pages[0].save(pdf_out, save_all=True, append_images=pages[1:], format="PDF")
   
   try:
     s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_name[:-4]+".pdf")
@@ -342,7 +354,7 @@ def lambda_handler(event, context):
           top5_eqns = rank_eqn_similarity(yolo_result=yolo_result, query_path=local_target, pdf_name=pdf_name)
           print("MathPix API calls completed, and tree similarity generated!")
 
-          page_nums_5 = sorted([page_num for (latex_string, page_num, eqn_num, dist) in top5_eqns])
+          page_nums_5 = sorted(set(([page_num for (latex_string, page_num, eqn_num, dist) in top5_eqns])))
           top5_eqns_info = [(page_num, eqn_num) for (latex_string, page_num, eqn_num, dist) in top5_eqns]
           #print("top_5_eqns_info ", top_5_eqns_info)
 
@@ -365,16 +377,16 @@ def lambda_handler(event, context):
 
           # draws the bounding boxes for the top 5 equations and converts pages back to PDF
           # final PDF with bounding boxes saved in directory pdf_out
-          final_output(pdf_name, bboxes_dict)
+          final_output(pdf_name, png_pdf_path, bboxes_dict)
 
           # return JSON with the following keys
           # id: UUID
           # pdf : path / pdf name
           # pages : list of page numbers sorted in order of most to least similar to query []
           # bbox: list of tuples (page_num, [list of equation label + four coordinates of bounding box])
-          #pages = sorted(page_nums_5)
+          pages = [int(p)+1 for p in page_nums_5]
           json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
-                        "id": uuid, "pdf": pdf_name, "pages": page_nums_5, "bbox": bboxes}
+                        "id": uuid, "pdf": pdf_name, "pages": pages, "bbox": bboxes}
             
           print(f"final json_result {json_result}")
       
