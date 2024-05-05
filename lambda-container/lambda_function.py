@@ -77,7 +77,7 @@ def image_to_latex_convert(image, query_bool):
         print("Failed to get LaTeX on API call. Status code:", response.status_code)
         return ""
 
-print("Finished image_to_latex_convert")
+#print("Finished image_to_latex_convert")
 
 def downloadDirectoryFroms3(bucketName, remoteDirectoryName):
     s3_resource = boto3.resource('s3')
@@ -87,7 +87,7 @@ def downloadDirectoryFroms3(bucketName, remoteDirectoryName):
             os.makedirs(os.path.dirname(obj.key))
         bucket.download_file(obj.key, obj.key) # save to same path
 
-print("Finished downloadDirectoryFroms3")
+#print("Finished downloadDirectoryFroms3")
 
 def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucket_path):
     """
@@ -120,7 +120,7 @@ def download_files(pdf_name, query_name, png_converted_pdf_path, pdfs_from_bucke
     # return paths to the pdf and query that we downloaded
     return local_pdf, f"{png_converted_pdf_path}_{pdf_name}", local_target
 
-print("Finished download_files")
+#print("Finished download_files")
 
 # Call draw_bounding_box on each PNG page of PDF
 def draw_bounding_box(image_path_in, bounding_boxes):
@@ -133,24 +133,29 @@ def draw_bounding_box(image_path_in, bounding_boxes):
   draw = ImageDraw.Draw(image)
   width, height = image.size
   x_ratio, y_ratio = width/model_width, height/model_height
-  SKYBLUE = (55,161,253)
+  #SKYBLUE = (55,161,253)
+  GREEN = (32,191,95)
+  YELLOW = (255,225,101)
 
   # create rectangle for each bounding box on this page
-  for bb in bounding_boxes:
+  for bb, rank in bounding_boxes:
     x1, y1, x2, y2 = bb
     x1, x2 = int(x_ratio*x1), int(x_ratio*x2)
     y1, y2 = int(y_ratio*y1), int(y_ratio*y2)
-    draw.rectangle(xy=(x1, y1, x2, y2), outline=SKYBLUE, width=6)
+    if rank == 0: 
+      draw.rectangle(xy=(x1, y1, x2, y2), outline=GREEN, width=6)
+    else:
+      draw.rectangle(xy=(x1, y1, x2, y2), outline=YELLOW, width=6)
   
   return image
   # save img as pdf
   #image.save(image_path_out[:-4]+".pdf")
 
-print("Finished draw_bounding_box")
+#print("Finished draw_bounding_box")
 
 def final_output(pdf_name, bounding_boxes):
   """
-  bounding_boxes : dict with keys page numbers, and values list of bounding boxes 
+  bounding_boxes : dict with keys page numbers, and values (list of bounding boxes, eqn rank)
   """
   IMG_IN_DIR = f"/tmp/converted_pdfs_{pdf_name}/"
   IMG_OUT_DIR = "/tmp/img_out/"
@@ -163,11 +168,12 @@ def final_output(pdf_name, bounding_boxes):
   subprocess.run(["mkdir", "-p", PDF_OUT_DIR])
 
   pdf_in = PDF_IN_DIR + pdf_name + ".pdf"
-  pdf_out = PDF_OUT_DIR + pdf_name[:-4]+"_pdf"
+  #pdf_out = PDF_OUT_DIR + pdf_name
+  pdf_out = PDF_OUT_DIR + pdf_name[:-4]+".pdf"
   #pdf_no_ext = pdf_name[:-4]
 
   result_pages = list(bounding_boxes.keys())
-  print("bounding boxes dict: ", bounding_boxes)
+  #print("bounding boxes dict: ", bounding_boxes)
 
   # call "draw_bounding_boxes" for each png page, save to IMG_OUT_DIR
   # merge the rendered images (with bounding boxes) to the pdf, and upload to S3
@@ -183,15 +189,15 @@ def final_output(pdf_name, bounding_boxes):
         else:
           img = Image.open(image_path_in).convert('RGB')
           pages.append(img)
-  pages[0].save(pdf_out, save_all=True, append_images=pages[1:])
+  pages[0].save(pdf_out, save_all=True, append_images=pages[1:], format="PDF")
   
   try:
-    s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_out)
+    s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_name)
     print(f"merged final pdf, uploaded {pdf_out} to {OUTPUT_BUCKET}")
   except:
     raise Exception("Upload failed")
 
-print("Finished final_output")
+#print("Finished final_output")
 
 # Store string repr. of LaTeX equation and its page number in list
 def rank_eqn_similarity(yolo_result, query_path, pdf_name):
@@ -251,7 +257,7 @@ def rank_eqn_similarity(yolo_result, query_path, pdf_name):
   print("most similar eqns: ", sorted_lst)
   return sorted_lst
 
-print("Finished parse_tree_similarity")
+#print("Finished parse_tree_similarity")
 
 def lambda_handler(event, context):
   try:
@@ -337,10 +343,10 @@ def lambda_handler(event, context):
           print("MathPix API calls completed, and tree similarity generated!")
 
           page_nums_5 = sorted([page_num for (latex_string, page_num, eqn_num, dist) in top5_eqns])
-          top_5_eqns_info = [(page_num, eqn_num) for (latex_string, page_num, eqn_num, dist) in top5_eqns]
+          top5_eqns_info = [(page_num, eqn_num) for (latex_string, page_num, eqn_num, dist) in top5_eqns]
           #print("top_5_eqns_info ", top_5_eqns_info)
 
-          # get bboxes for top5 equations
+          # sort by page number
           bboxes_dict = {}
           for dict_elem, page_num in yolo_result:
             # don't draw bounding boxes on pages that don't have top 5 equation
@@ -349,13 +355,14 @@ def lambda_handler(event, context):
             count = 1
             for bboxes in dict_elem["boxes"]:
               # only collect bounding boxes from top 5 equation
-              if (page_num, count) in top_5_eqns_info:
+              if (page_num, count) in top5_eqns_info:
+                rank = top5_eqns_info.index((page_num, count))
                 if page_num in bboxes_dict.keys():
-                  bboxes_dict[page_num].append(bboxes[:4])
+                  bboxes_dict[page_num].append((bboxes[:4], rank))
                 else:
-                  bboxes_dict[page_num] = [bboxes[:4]]
+                  bboxes_dict[page_num] = [(bboxes[:4], rank)]
               count += 1
-            
+
           # draws the bounding boxes for the top 5 equations and converts pages back to PDF
           # final PDF with bounding boxes saved in directory pdf_out
           final_output(pdf_name, bboxes_dict)
@@ -368,8 +375,6 @@ def lambda_handler(event, context):
           #pages = sorted(page_nums_5)
           json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
                         "id": uuid, "pdf": pdf_name, "pages": page_nums_5, "bbox": bboxes}
-          # json_result = {"statusCode" : 200, "body": "Successfully queried and processed your document!", 
-          #               "id": uuid, "pdf": pdf_name, "pages": page_nums_5}
             
           print(f"final json_result {json_result}")
       
