@@ -5,9 +5,6 @@ import json
 import dataHandler
 import subprocess
 import os
-#import sympy as sp
-#from sympy.parsing.latex import parse_latex
-#from zss import Node, distance
 import PyPDF2
 from PIL import Image, ImageDraw
 import pdf2image
@@ -20,7 +17,6 @@ import requests
 #import numpy as np
 import time
 import Levenshtein
-
 print("Finished imports")
 
 # Initialize S3 client
@@ -59,7 +55,7 @@ def image_to_latex_convert(image, query_bool):
         "idiomatic_braces": True
     }
 
-    print(f"type of img sent to mathpix {type(image)}, {query_bool}")
+    #print(f"type of img sent to mathpix {type(image)}, {query_bool}")
     #print(f"type after buffered reader stuff {type(io.BufferedReader(io.BytesIO(image)))}")
     # assume that image is stored in bytes
     response = requests.post("https://api.mathpix.com/v3/text",
@@ -177,6 +173,8 @@ def final_output(pdf_name, bounding_boxes):
 
   # call "draw_bounding_boxes" for each png page, save to IMG_OUT_DIR
   # merge the rendered images (with bounding boxes) to the pdf, and upload to S3
+  RESIZE_FACTOR = 0.25
+  RESAMPLE_ALGO = Image.Resampling.LANCZOS
   pages = []
   with open(pdf_in, 'rb') as file: 
     pdf = PyPDF2.PdfReader(file)
@@ -185,14 +183,16 @@ def final_output(pdf_name, bounding_boxes):
         if str(i) in result_pages:  
           # pass in list of bounding boxes for each page
           img = draw_bounding_box(image_path_in, bounding_boxes[str(i)])
-          pages.append(img)
         else:
           img = Image.open(image_path_in).convert('RGB')
-          pages.append(img)
+        
+        w, h = img.size
+        resized_image = img.resize((int(w*RESIZE_FACTOR), int(h*RESIZE_FACTOR)), resample=RESAMPLE_ALGO)
+        pages.append(resized_image)
   pages[0].save(pdf_out, save_all=True, append_images=pages[1:], format="PDF")
   
   try:
-    s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_name)
+    s3.upload_file(pdf_out, OUTPUT_BUCKET, pdf_name[:-4]+".pdf")
     print(f"merged final pdf, uploaded {pdf_out} to {OUTPUT_BUCKET}")
   except:
     raise Exception("Upload failed")
@@ -238,7 +238,7 @@ def rank_eqn_similarity(yolo_result, query_path, pdf_name):
       # CROP original PNG with yolo bounding box coordinates
       x1, x2 = int(x_ratio*x1), int(x_ratio*x2)
       y1, y2 = int(y_ratio*y1), int(y_ratio*y2)
-      cropped_image = image.crop((x1, y1, x2, y2))  
+      cropped_image = image.crop((x1, y1, x2, y2))
       cropped_image.save(crop_path)
       
       latex_string = image_to_latex_convert(open(crop_path, "rb"), query_bool=False)
