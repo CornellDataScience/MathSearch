@@ -6,12 +6,12 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 RUN yum -y update
 RUN yum -y install mesa-libGL
 RUN yum -y install poppler-utils
+RUN yum -y install gcc python3-devel
 
 # Install the specified packages
 RUN pip install -r requirements.txt
 
-# Copy lambda function code and the OCR models
-COPY ocr-models ${LAMBDA_TASK_ROOT}/ocr-models
+# Copy lambda function code
 COPY constants.py ${LAMBDA_TASK_ROOT}
 COPY dataHandler.py ${LAMBDA_TASK_ROOT}
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}
