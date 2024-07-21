@@ -1,5 +1,45 @@
 # MathSearch
 
-A next generation search engine for researchers that supports searching with LaTeX math script.
+A next generation search engine for researchers that supports searching for equations inside PDFs with LaTeX math script. To learn more about our machine learning and data pipeline, refer to our [wiki](https://github.com/CornellDataScience/MathSearch/wiki). Our domain (mathsearch.org) is not currently active, but please check back here for updates in the near future!
 
-Refer to our [wiki](https://github.com/CornellDataScience/MathSearch/wiki) to get started :-)
+## Features
+- LaTeX Math Script Support: Search using LaTeX, the standard for mathematical typesetting, or use our virtual keyboard.
+- Research Focused: Tailored to meet the needs of academic and scientific researchers.
+- Advanced Search Capabilities: Improved search accuracy for mathematical queries.
+
+## Acknowledgements
+MathSearch is a software project undertaken by Cornell Data Science, an Engineering Project Team at Cornell University. MathSearch would not have been made possible without the following talented developers.
+
+### Contributors (SP24)
+- Technical Lead: [Deniz Bölöni-Turgut](https://github.com/denizbt)
+- Project Manager: [Katie Zelvin](https://github.com/katiezelvin)
+- Cade Jin
+- Audrey Wang
+- Mahitha Penmetsa
+- Mericel Tao
+- Jake Silver
+- Aarav Khanna
+- Lin Ming Chang
+- Eric Do
+- Peter Favero
+- Ryan Lee
+- Noah Plant
+
+### Previous Contributors
+- Alexander Wang
+- Kaitlyn Chen
+- Travis Zhang
+- Emerald Liu
+- Johann Lee
+- Pun Chaixanien
+- Jerry Chen
+- Laura Gong
+- Darren Key
+- Derek Lee
+- Mason Bulling
+- Ronin Sharma
+- Varun Gande
+- Vivian Chen
+- Andrea Siby
+- Alice Um
+- Felix Hohne

@@ -63,11 +63,14 @@ const Results = () => {
       });
 
       const fileKey = uuid + ".pdf";
+      // const fileKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6.pdf";
       const jsonKey = uuid + "_results.json";
+      // const jsonKey = "6c5f1f35-bba5-4346-a04f-485b8fd167d6" + "_results.json";
 
       console.log(S3_OUTPUT_BUCKET);
 
       // Download PDF from S3 output bucket
+      console.log(fileKey)
       const pdfParams = {
         Bucket: S3_OUTPUT_BUCKET,
         Key: fileKey,
@@ -108,24 +111,23 @@ const Results = () => {
 
   useEffect(() => {
     console.log("Component mounted, setting up WebSocket");
-    const ws = new WebSocket(WEBSOCKET_URL);
+    const ws = new WebSocket(`${WEBSOCKET_URL}?uuid=${uuid}`);
 
     ws.onopen = () => {
       console.log('WebSocket Connected');
-      const message = JSON.stringify({
-        action: "registerConnection", // The action your Lambda function looks for
-        identifiers: {
-          uuid: uuid, // Make sure this variable contains the correct UUID
-        }
-      });
+      const message = JSON.stringify({ action: "register", uuid: uuid });
+      console.log('Sending message:', message);
       ws.send(message);
-      console.log(`Message sent: ${message}`);
     };
 
-    ws.onmessage = (message) => {
-      console.log('WebSocket Message:', message.data);
-      const data = JSON.parse(message.data);
-      if (data.type === "START_FETCH") {
+    ws.onmessage = (event) => {
+      console.log('WebSocket Message:', event.data);
+      // Handle incoming messages
+      // Assuming 'message' has a 'type' property to dictate actions
+      console.log('Start Fetch')
+      const message = JSON.parse(event.data);
+      if (message.type === "PDF_PROCESSING_COMPLETE") {
+        console.log("Results are ready:", message.message);
         fetchData();
       }
     };
@@ -140,22 +142,21 @@ const Results = () => {
 
     setWebSocket(ws);
 
+    // This function might need to be moved outside useEffect or wrapped in a useCallback if used elsewhere
     const fetchData = async () => {
       if (!pdfDownloaded || !jsonDownloaded) {
+        console.log(pdfDownloaded);
+        console.log(jsonDownloaded);
         downloadRequest(uuid);
-      } else {
-        console.log("Loading is complete!");
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     // Clean up on unmount
     return () => {
       ws.close();
     };
-  }, [pdfDownloaded, jsonDownloaded, uuid]); // Ensuring uuid is in the dependency array if it changes
-
-
+  }, [pdfDownloaded, jsonDownloaded]); // Keep these dependencies if their changes should affect the effect
 
 
 

@@ -1,7 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import "katex/dist/katex.min.css";
-import { BlockMath, InlineMath } from "react-katex";
+import { BlockMath } from "react-katex";
 import { CognitoIdentityCredentials } from "aws-sdk/global";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import "./LaTeXInput.css";
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
+import MathKeyboard from './MathKeyboard';
+
 
 
 /* BEGIN AWS CONSTANTS */
@@ -35,15 +37,52 @@ function LaTeXInput() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState({ isError: false, message: "" });
 
+  const [showKeyboard, setShowKeyboard] = useState(false);
+
+  const handleSymbolSelect = (latex) => {
+    // Get a reference to the MathInput textarea
+    const inputArea = document.getElementById('MathInput');
+    const cursorPosition = inputArea.selectionStart;
+
+    setText((prevText) => {
+      // Insert the LaTeX at the current cursor position
+      const newText =
+        prevText.slice(0, cursorPosition) +
+        latex +
+        prevText.slice(cursorPosition);
+
+      // Determine the position to set the cursor after inserting the LaTeX
+      const positions = [latex.indexOf('}'), latex.indexOf(')'), latex.indexOf(']')];
+      const validPositions = positions.map(pos => (pos === -1 ? latex.length : pos));
+      const firstClosingCharIndex = Math.min(...validPositions) + cursorPosition;
+
+      updatePreview();
+
+      // Set the cursor position after the preview is updated
+      setTimeout(() => {
+        if (inputArea) {
+          inputArea.focus();
+          // Place the cursor before the first closing character
+          inputArea.setSelectionRange(firstClosingCharIndex, firstClosingCharIndex);
+        }
+      }, 0);
+
+      return newText;
+    });
+  };
+
+
+
+
   const fetch = require('node-fetch');
 
   const updatePreview = () => {
-    const rawtext = document.getElementById("MathInput").value;
-    ReactDOM.render(
-      <BlockMath math={rawtext} />,
-      document.getElementById("MathPreview")
-    );
+    const previewElem = document.getElementById("MathPreview");
+    if (previewElem) {
+      ReactDOM.render(<BlockMath math={text} />, previewElem);
+    }
   };
+
 
   function cleanSVG(svgData) {
     const svgStart = svgData.indexOf('<svg');
@@ -73,7 +112,11 @@ function LaTeXInput() {
 
 
   async function renderLatexToBlob(latexString) {
-    const response = await fetch(`/api/math/?from=${encodeURIComponent(latexString)}`);
+    const encodedLatexString = encodeURIComponent(latexString);
+    const apiUrl = `https://math.vercel.app/?from=${encodedLatexString}`;
+    const url = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+    const response = await fetch(url);
+
     const svgData = await response.text();
 
     return new Promise((resolve, reject) => {
@@ -184,11 +227,13 @@ function LaTeXInput() {
   /** When user clicks into the search bar */
   const handleFocus = async (event) => {
     setFocus(true);
+    setShowKeyboard(true);
   };
 
   /** When user clicks out of the search bar */
   const handleBlur = async (event) => {
     setFocus(false);
+    setShowKeyboard(false);
   };
 
   const handleFileInput = (e) => {
@@ -214,10 +259,10 @@ function LaTeXInput() {
   return (
     <>
       <div className="latex-input-container">
+        {/* Start of latex-input-content */}
         <div className="latex-input-content">
           {/* Math input */}
-          <div className="input-group"
-          >
+          <div className="input-group">
             <textarea
               rows="1"
               className={
@@ -228,52 +273,32 @@ function LaTeXInput() {
               placeholder="Try the Base Problem: \sum_{n=1}^{\infty} \frac{1}{n^2}"
               id="MathInput"
               onKeyUp={updatePreview}
+              value={text}
               onChange={handleChange}
               onFocus={handleFocus}
               onBlur={handleBlur}
             />
-            {!focus ? (
-              <button
-                onClick={handleClick}
-                className="btn btn-dark"
-                style={{ borderRadius: "0px 30px 30px 0px" }}
-                type="button"
-              >
-                Search
-              </button>
-            ) : (
-              <button
-                onClick={handleClick}
-                className="btn btn-dark"
-                style={{ borderRadius: "0px 30px 00px 0px" }}
-                type="button"
-              >
-                Search
-              </button>
-            )}
+            <button
+              onClick={handleClick}
+              className="btn btn-dark"
+              style={{ borderRadius: !focus ? "0px 30px 30px 0px" : "0px 30px 0px 0px" }}
+              type="button"
+            >
+              Search
+            </button>
           </div>
+          {/* Render the MathKeyboard here */}
+          <MathKeyboard onSymbolSelect={handleSymbolSelect} isVisible={showKeyboard} />
+        </div >
+        {/* End of latex-input-content */}
 
-          <div>
-            {/* <MathInput /> */}
-          </div>
-
-
-          {/* Math output preview */}
-          <div style={{ position: "relative", paddingTop: 1 }} >
-            <div style={{ position: "absolute", width: "100%" }}>
-              {!focus ? (
-                <div className="output" style={{ display: "none" }}>
-                  <div id="MathPreview"></div>
-                </div>
-              ) : (
-                <div className="output">
-                  <div id="MathPreview"></div>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Math output preview */}
+        <div className="output" id="MathPreview" style={{ display: !focus ? "none" : "block" }}>
+          {/* MathPreview content will be rendered here */}
         </div>
-        <div className="w-100 pt-4">
+
+        {/* File upload input */}
+        <div style={{ marginTop: '20px' }} className="file-upload-container">
           <input
             className="form-control"
             type="file"
@@ -282,6 +307,7 @@ function LaTeXInput() {
           />
         </div>
 
+        {/* Error message */}
         {error.isError && (
           <Alert icon={<CheckIcon fontSize="inherit" />} severity="error">
             {error.message}
@@ -290,6 +316,8 @@ function LaTeXInput() {
       </div>
     </>
   );
+
+
 }
 
 export default LaTeXInput;
