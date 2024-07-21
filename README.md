@@ -7,10 +7,7 @@ A next generation search engine for researchers that supports searching for equa
 - Research Focused: Tailored to meet the needs of academic and scientific researchers.
 - Advanced Search Capabilities: Improved search accuracy for mathematical queries.
 
-## Acknowledgements
-MathSearch is a software project undertaken by Cornell Data Science, an Engineering Project Team at Cornell University. MathSearch would not have been made possible without the following talented developers.
-
-## Contributors (SP24)
+## Developers (Spring 2024)
 - Technical Lead: [Deniz Bölöni-Turgut](https://github.com/denizbt)
 - Project Manager: [Katie Zelvin](https://github.com/katiezelvin)
 - Cade Jin
@@ -27,15 +24,12 @@ MathSearch is a software project undertaken by Cornell Data Science, an Engineer
 
 ### Past Contributors:
 __2023 Fall Leads:__  Technical Lead: Travis Zhang, Project Manager: Pun Chaixanien 
+
 __2023 Spring Leads:__  Emerald Liu, Johann Lee  
+
 __2022 Fall Leads:__  Alexander Wang, Kaitlyn Chen  
+
 __Other Members:__
-- Alexander Wang
-- Kaitlyn Chen
-- Travis Zhang
-- Emerald Liu
-- Johann Lee
-- Pun Chaixanien
 - Jerry Chen
 - Laura Gong
 - Darren Key
