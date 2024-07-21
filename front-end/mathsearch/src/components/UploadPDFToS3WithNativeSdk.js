@@ -1,164 +1,150 @@
-import React, { useState } from 'react';
-import {useNavigate} from 'react-router-dom';
-import AWS from 'aws-sdk'
-import {v4} from 'uuid';
-import {get_image} from './LaTeXInput'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CognitoIdentityCredentials } from 'aws-sdk/global';
+import AWS from 'aws-sdk';
+import { v4 } from 'uuid';
+import { get_image } from './LaTeXInput';
 
-const S3_BUCKET = process.env.REACT_APP_S3_BUCKET;
+// Constants for Amazon Cognito Identity Pool and WebSocket
+const IDENTITY_POOL_ID = process.env.REACT_APP_IDENTITY_POOL_ID;
 const REGION = process.env.REACT_APP_REGION;
+const S3_BUCKET = process.env.REACT_APP_S3_BUCKET;
+const WEBSOCKET_URL = 'wss://t05sr0quhf.execute-api.us-east-1.amazonaws.com/production/';
 
-const keyprefix = 'inputs/';
+AWS.config.region = REGION;
 
-// var tempCreds = new AWS.ChainableTemporaryCredentials({
-//   params: {
-//     RoleArn: 'arn:aws:iam::290365077634:role/ec2_access_s3'
-//   }
-// });
+// Initialize the Amazon Cognito credentials provider
+AWS.config.credentials = new CognitoIdentityCredentials({
+  IdentityPoolId: IDENTITY_POOL_ID,
+});
 
-// console.log(tempCreds.getPromise());
-
-AWS.config.update({
-  accessKeyId: process.env.REACT_APP_ACCESS_KEY_ID,
-  secretAccessKey: process.env.REACT_APP_SECRET_ACCESS_KEY
-})
-
-
-const myBucket = new AWS.S3({
-  params: {
-    Bucket: S3_BUCKET
-  },
-  region: REGION
-})
-
-// myBucket.listObjects({Bucket: S3_BUCKET}, function(err, data) {
-//   if (err) console.log(err, err.stack);
-//   else console.log(data);
-// });
-
-const mySQS = new AWS.SQS({
-  params: {
-    QueueUrl: process.env.REACT_APP_SQS_URL
-  },
-  region: REGION
-})
-
-function UploadPDFToS3WithNativeSdk(){
-
+function UploadPDFToS3WithNativeSdk() {
   const navigate = useNavigate();
-
-  const toReturnPage = () => {
-    navigate('/returnpage', {state:{selectedFile: selectedFile}})
-  }
-
   const [selectedFile, setSelectedFile] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [ws, setWs] = useState(null);
+
+  // Establish WebSocket connection
+  useEffect(() => {
+    const websocket = new WebSocket(WEBSOCKET_URL);
+    websocket.onopen = () => console.log('WebSocket Connected');
+    websocket.onmessage = (message) => {
+      console.log('WebSocket Message:', message.data);
+      // Add your logic here to handle messages from your backend
+      // For example, checking the processing status of the uploaded PDF
+    };
+    setWs(websocket);
+    return () => websocket.close();
+  }, []);
+
+  const toReturnPage = () => {
+    navigate('/returnpage', { state: { selectedFile: selectedFile } });
+  };
 
   const handleFileInput = (e) => {
     setSelectedFile(e.target.files[0]);
-  }
+  };
 
-  function validateResponse(response) {
-    if (!response.ok) {
-        throw Error(response.statusText);
-    }
-    return response;
-  }
+  const uploadFile = (file) => {
+    AWS.config.credentials.get((err) => {
+      if (err) {
+        console.log("Error retrieving credentials: ", err);
+        return;
+      }
 
-  const uploadFile = async (file) => {
-    const uuidKey = v4();
-    const fileKey = keyprefix + uuidKey + "_pdf";
-    const imageKey = keyprefix + uuidKey + "_image";
+      const myBucket = new AWS.S3({
+        params: { Bucket: S3_BUCKET },
+        region: REGION,
+      });
 
-    var imageURL = get_image();
+      const uuidKey = v4();
+      const fileKey = 'inputs/' + uuidKey + '_pdf';
+      const imageKey = 'inputs/' + uuidKey + '_image';
 
-    console.log(imageURL);
+      const imageURL = get_image();
 
-    fetch(imageURL)
-      .then(validateResponse)
-      .then(response => response.blob())
-      .then(blob => {
-         const imageParams = {
-           ACL: 'public-read',
-           Body: blob,
-           Bucket: S3_BUCKET,
-           Key: imageKey
-         }
+      // Fetch and upload the image from LaTeXInput
+      fetch(imageURL)
+        .then(response => response.blob())
+        .then(blob => {
+          const imageParams = {
+            ACL: 'public-read',
+            Body: blob,
+            Bucket: S3_BUCKET,
+            Key: imageKey,
+          };
 
           myBucket.putObject(imageParams)
-                  .send((err) => {
-                    if (err) console.log(err)
-                  })
-      })
-      .then(() => {
-        const pdfParams = {
-          ACL: 'public-read',
-          Body: file,
-          Bucket: S3_BUCKET,
-          Key: fileKey
-        };
-
-        myBucket.putObject(pdfParams)
-                .on('httpUploadProgress', (evt) => {
-                  setProgress(Math.round((evt.loaded / evt.total) * 100))
-                })
-                .send((err) => {
-                  if (err) console.log(err)
-                })
-
-        let msg = {
-          uuid: uuidKey,
-          pdf_path: fileKey,
-          image_path: imageKey
-        }
-
-        const requestOptions = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(msg)
-      };
-        fetch(process.env.REACT_APP_UPLOAD, requestOptions)
-        .then(async response => {
-            const isJson = response.headers.get('content-type')?.includes('application/json');
-            const data = isJson && await response.json();
-
-            // check for error response
-            if (!response.ok) {
-                // get error message from body or default to response status
-                const error = (data && data.message) || response.status;
-                return Promise.reject(error);
-            }
-
-            console.log('Message sent to backend success!')
-            console.log(response.data.message)
-        })
-        .catch(error => {
-            // this.setState({ errorMessage: error.toString() });
-            console.error('There was an error!', error);
+            .on('httpUploadProgress', (evt) => {
+              setProgress(Math.round((evt.loaded / evt.total) * 100));
+            })
+            .send((err) => {
+              if (err) console.log(err);
+              // Optionally, notify your WebSocket server about the new image
+              // ws.send(JSON.stringify({ action: 'imageUploaded', imageKey: imageKey }));
+            });
         });
 
-        // const sqsParams = {
-        //   MessageBody: JSON.stringify(msg)
-        // }
+      // Upload the PDF
+      const pdfParams = {
+        ACL: 'public-read',
+        Body: file,
+        Bucket: S3_BUCKET,
+        Key: fileKey,
+      };
 
-        // mySQS.sendMessage(sqsParams, function(err, data){
-        //   if (err) {
-        //     console.log("Error: ", err)
-        //   } else {
-        //     console.log("Success: ", data.MessageId);
-        //   }
-        // });
+      myBucket.putObject(pdfParams)
+        .on('httpUploadProgress', (evt) => {
+          setProgress(Math.round((evt.loaded / evt.total) * 100));
+        })
+        .send((err) => {
+          if (err) console.log(err);
+          else {
+            // Notify your WebSocket server about the new PDF
+            ws.send(JSON.stringify({ action: 'pdfUploaded', pdfKey: fileKey }));
+          }
+        });
 
-        toReturnPage();
+      let msg = {
+        uuid: uuidKey,
+        pdf_path: fileKey,
+        image_path: imageKey,
+      };
 
-      });
-  }
+      // Send the file information to your backend
+      const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(msg),
+      };
+      fetch(process.env.REACT_APP_UPLOAD, requestOptions)
+        .then(async response => {
+          const isJson = response.headers.get('content-type')?.includes('application/json');
+          const data = isJson && await response.json();
 
+          // check for error response
+          if (!response.ok) {
+            const error = (data && data.message) || response.status;
+            return Promise.reject(error);
+          }
 
-  return <div>
-    <div>Native SDK File Upload Progress is {progress}%</div>
-    <input id="file_input" type="file" onChange={handleFileInput} />
-    <button onClick={() => uploadFile(selectedFile)}> Upload to S3</button>
-  </div>
+          console.log('Message sent to backend successfully!');
+        })
+        .catch(error => {
+          console.error('There was an error!', error);
+        });
+
+      toReturnPage();
+    });
+  };
+
+  return (
+    <div>
+      <div>Native SDK File Upload Progress is {progress}%</div>
+      <input id="file_input" type="file" onChange={handleFileInput} />
+      <button onClick={() => uploadFile(selectedFile)}>Upload to S3</button>
+    </div>
+  );
 }
 
 export default UploadPDFToS3WithNativeSdk;

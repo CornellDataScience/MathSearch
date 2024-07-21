@@ -24,6 +24,7 @@ CORS(app)
 # waits for backend to finish running model
 @app.route('/api/result')
 def result():
+	print("getting result from backend!")
 	# start = time.time()
 	data = request.json
 	filename = data["file"]
@@ -50,14 +51,14 @@ def result():
 	# end = time.time()
 
 	info = {
-		"pdf": "/home/ubuntu/MathSearch/front-end/web/pdf_out/"+filename,
+		"pdf": "/home/ubuntu/MathSearch/front-end/web/pdf_out/"+filename[:-4]+".pdf",
 		"pages": page_lst
 	}
 	INFO_PATH = "/home/ubuntu/MathSearch/front-end/web/info/info.json"
-	with open(INFO_PATH,"w") as json_file:
-		json.dump(info, json_file, indent=4, separators=(",",":"))
-
-	return "done"
+	# with open(INFO_PATH,"w") as json_file:
+	# 	json.dump(info, json_file, indent=4, separators=(",",":"))
+	print("got result from backend! saved to /home/ubuntu/MathSearch/front-end/web/info/info.json")
+	return "got result from backend! saved to /home/ubuntu/MathSearch/front-end/web/info/info.json"
 
 	# response = make_response(send_file(f'pdf_out/ex1.pdf'))
 	# response.headers['pages'] = page_lst
